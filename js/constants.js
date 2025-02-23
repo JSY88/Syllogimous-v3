@@ -4042,14 +4042,14 @@ const dirStringFromCoord = (coord) => {
 
 function twoDToArrow(coord) {
     const arrowMap = {
-        "1,0": `<i class="ci-Arrow_Left_MD"></i>`,
-        "1,1": `<i class="ci-Arrow_Down_Left_MD"></i>`,
-        "1,-1": `<i class="ci-Arrow_Up_Left_MD"></i>`,
-        "0,1": `<i class="ci-Arrow_Down_LG"></i>`,
-        "0,-1": `<i class="ci-Arrow_Up_LG"></i>`,
-        "-1,0": `<i class="ci-Arrow_Right_LG"></i>`,
-        "-1,1": `<i class="ci-Arrow_Down_Right_LG"></i>`,
-        "-1,-1": `<i class="ci-Arrow_Up_Right_LG"></i>`,
+        "-1,0": `<i class="ci-Arrow_Left_MD"></i>`,
+        "1,0": `<i class="ci-Arrow_Right_LG"></i>`,
+        "-1,-1": `<i class="ci-Arrow_Down_Left_MD"></i>`,
+        "1,1": `<i class="ci-Arrow_Up_Right_LG"></i>`,
+        "-1,1": `<i class="ci-Arrow_Up_Left_MD"></i>`,
+        "1,-1": `<i class="ci-Arrow_Down_Right_LG"></i>`,
+        "0,-1": `<i class="ci-Arrow_Down_LG"></i>`,
+        "0,1": `<i class="ci-Arrow_Up_LG"></i>`,
     };
 
     return arrowMap[coord.slice(0, 2).join(",")] || "";
