@@ -3,13 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>♡사라지는 텍스트 훈련♡</title>
+    <title>사라지는 텍스트 훈련</title>
     <style>
         body {
             font-family: Arial, sans-serif;
             margin: 0;
             padding: 5px;
-            transition: opacity 0.3s, background-color 0.3s;
             background-color: #f5f5f5;
             overscroll-behavior: none;
             position: relative;
@@ -66,8 +65,7 @@
             line-height: 1.6;
             white-space: pre-wrap;
             position: relative;
-            overflow-y: hidden;
-            overflow-x: hidden;
+            overflow: hidden;
             width: 100%;
             height: calc(70vh - 80px);
             margin: 0 auto;
@@ -78,7 +76,7 @@
             border-radius: 8px;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
             z-index: 1;
-            transition: transform 0.3s ease, background-color 0.3s, color 0.3s;
+            transition: transform 0.3s ease;
             color: #333;
             user-select: none;
         }
@@ -104,7 +102,6 @@
         .char-space {
             opacity: 1 !important;
         }
-        /* 전체화면 버튼 스타일 */
         .fullscreen-btn {
             position: fixed;
             background: transparent;
@@ -120,7 +117,6 @@
             transform: translateX(-50%);
             width: 100px;
             height: 50px;
-            opacity: 0.5;
         }
         .fullscreen #prevPageBtn {
             display: block;
@@ -128,7 +124,6 @@
             top: 0;
             width: 30%;
             height: 100%;
-            opacity: 0.5;
         }
         .fullscreen #nextPageBtn {
             display: block;
@@ -136,7 +131,6 @@
             top: 0;
             width: 30%;
             height: 100%;
-            opacity: 0.5;
         }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
@@ -157,18 +151,18 @@
     <details>
         <summary>고급 설정</summary>
         <div id="advancedControls">
-            <label for="speedControl">속도 (빠름: 50ms ~ 느림: 2000ms):</label>
+            <label for="speedControl">속도 (ms):</label>
             <input type="range" id="speedControl" min="50" max="2000" step="1" value="100">
             <label for="fontSizeRange">글꼴 크기:</label>
             <input type="range" id="fontSizeRange" min="12" max="36" value="18">
             <input type="number" id="fontSize" min="12" max="36" value="18">px
             <label for="textMaxWidth">최대 너비 (%):</label>
             <input type="number" id="textMaxWidth" min="50" max="100" value="100" step="1">
-            <label for="textHeight">텍스트 영역 높이 (vh):</label>
+            <label for="textHeight">텍스트 높이 (vh):</label>
             <input type="number" id="textHeight" min="30" max="100" value="70" step="1">
             <label for="touchSensitivity">터치 민감도 (px):</label>
             <input type="number" id="touchSensitivity" min="10" max="100" value="50" step="10">
-            <label for="effectDelay">효과 재시작 지연 (ms):</label>
+            <label for="effectDelay">효과 지연 (ms):</label>
             <input type="number" id="effectDelay" min="0" max="2000" value="400" step="100">
             <label for="applyEffectDelay">효과 지연 적용:</label>
             <input type="checkbox" id="applyEffectDelay" checked>
@@ -185,7 +179,7 @@
             <input type="checkbox" id="autoRestart" checked>
             <label for="fullscreenMode">전체화면 모드:</label>
             <input type="checkbox" id="fullscreenMode">
-            <label for="btnOpacity">전체화면 버튼 투명도:</label>
+            <label for="btnOpacity">버튼 투명도:</label>
             <input type="range" id="btnOpacity" min="0" max="1" step="0.1" value="0.5">
             <label for="showFullscreenBtns">전체화면 버튼 표시:</label>
             <input type="checkbox" id="showFullscreenBtns" checked>
@@ -199,361 +193,337 @@
     <button id="nextPageBtn" class="fullscreen-btn" aria-label="다음 페이지"></button>
 
     <script>
-        const textContent = document.getElementById('textContent');
-        const toggleButton = document.getElementById('toggleButton');
-        const fileUpload = document.getElementById('fileUpload');
-        const prevPage = document.getElementById('prevPage');
-        const nextPage = document.getElementById('nextPage');
-        const tocButton = document.getElementById('tocButton');
-        const libraryButton = document.getElementById('libraryButton');
-        const jumpToPage = document.getElementById('jumpToPage');
-        const speedControl = document.getElementById('speedControl');
-        const fontSize = document.getElementById('fontSize');
-        const fontSizeRange = document.getElementById('fontSizeRange');
-        const textMaxWidth = document.getElementById('textMaxWidth');
-        const textHeight = document.getElementById('textHeight');
-        const touchSensitivity = document.getElementById('touchSensitivity');
-        const effectDelay = document.getElementById('effectDelay');
-        const applyEffectDelay = document.getElementById('applyEffectDelay');
-        const doubleTapDelay = document.getElementById('doubleTapDelay');
-        const effectSelect = document.getElementById('effectSelect');
-        const pageAnimation = document.getElementById('pageAnimation');
-        const autoRestart = document.getElementById('autoRestart');
-        const fullscreenMode = document.getElementById('fullscreenMode');
-        const btnOpacity = document.getElementById('btnOpacity');
-        const showFullscreenBtns = document.getElementById('showFullscreenBtns');
-        const pageInfo = document.getElementById('pageInfo');
-        const exitFullscreenBtn = document.getElementById('exitFullscreenBtn');
-        const prevPageBtn = document.getElementById('prevPageBtn');
-        const nextPageBtn = document.getElementById('nextPageBtn');
+        (function() {
+            // 모듈화된 앱 객체
+            const app = {
+                elements: {
+                    textContent: document.getElementById('textContent'),
+                    toggleButton: document.getElementById('toggleButton'),
+                    fileUpload: document.getElementById('fileUpload'),
+                    prevPage: document.getElementById('prevPage'),
+                    nextPage: document.getElementById('nextPage'),
+                    tocButton: document.getElementById('tocButton'),
+                    libraryButton: document.getElementById('libraryButton'),
+                    jumpToPage: document.getElementById('jumpToPage'),
+                    speedControl: document.getElementById('speedControl'),
+                    fontSize: document.getElementById('fontSize'),
+                    fontSizeRange: document.getElementById('fontSizeRange'),
+                    textMaxWidth: document.getElementById('textMaxWidth'),
+                    textHeight: document.getElementById('textHeight'),
+                    touchSensitivity: document.getElementById('touchSensitivity'),
+                    effectDelay: document.getElementById('effectDelay'),
+                    applyEffectDelay: document.getElementById('applyEffectDelay'),
+                    doubleTapDelay: document.getElementById('doubleTapDelay'),
+                    effectSelect: document.getElementById('effectSelect'),
+                    pageAnimation: document.getElementById('pageAnimation'),
+                    autoRestart: document.getElementById('autoRestart'),
+                    fullscreenMode: document.getElementById('fullscreenMode'),
+                    btnOpacity: document.getElementById('btnOpacity'),
+                    showFullscreenBtns: document.getElementById('showFullscreenBtns'),
+                    pageInfo: document.getElementById('pageInfo'),
+                    exitFullscreenBtn: document.getElementById('exitFullscreenBtn'),
+                    prevPageBtn: document.getElementById('prevPageBtn'),
+                    nextPageBtn: document.getElementById('nextPageBtn')
+                },
+                state: {
+                    interval: null,
+                    pages: [],
+                    renderedPages: [],
+                    currentPage: 0,
+                    isTrainingActive: false,
+                    isFullscreen: false,
+                    book: null,
+                    rendition: null
+                },
 
-        let interval, pages = [], renderedPages = [], currentPage = 0, isTrainingActive = false, isFullscreen = false;
-        let book, rendition;
+                // 초기 설정 로드
+                init() {
+                    this.loadSettings();
+                    this.setupEventListeners();
+                    this.updateTextStyles();
+                    this.updateButtonOpacity();
+                },
 
-        // 초기 설정 로드
-        fontSize.value = localStorage.getItem('fontSize') || 18;
-        fontSizeRange.value = fontSize.value;
-        textMaxWidth.value = localStorage.getItem('textMaxWidth') || 100;
-        textHeight.value = localStorage.getItem('textHeight') || 70;
-        touchSensitivity.value = localStorage.getItem('touchSensitivity') || 50;
-        effectDelay.value = localStorage.getItem('effectDelay') || 400;
-        doubleTapDelay.value = localStorage.getItem('doubleTapDelay') || 300;
-        btnOpacity.value = localStorage.getItem('btnOpacity') || 0.5;
-
-        // 폰트 크기 동기화
-        fontSizeRange.oninput = fontSize.oninput = () => {
-            fontSize.value = fontSizeRange.value;
-            textContent.style.fontSize = `${fontSize.value}px`;
-            localStorage.setItem('fontSize', fontSize.value);
-            updatePagesAndDisplay();
-        };
-
-        // 텍스트 영역 크기 조정
-        textMaxWidth.addEventListener('input', updateTextContentStyles);
-        textHeight.addEventListener('input', updateTextContentStyles);
-        function updateTextContentStyles() {
-            textContent.style.maxWidth = `${textMaxWidth.value}vw`;
-            textContent.style.width = `${textMaxWidth.value}vw`;
-            textContent.style.height = `calc(${textHeight.value}vh - 80px)`;
-            localStorage.setItem('textMaxWidth', textMaxWidth.value);
-            localStorage.setItem('textHeight', textHeight.value);
-            updatePagesAndDisplay();
-        }
-
-        // 페이지 업데이트 및 표시
-        function updatePagesAndDisplay() {
-            pages = splitTextToFit(pages.join('\n\n'), textContent.getBoundingClientRect().height);
-            preloadPages();
-            displayPage();
-        }
-
-        // 터치 민감도 조정
-        let touchStartX = 0, touchTimeout;
-        textContent.addEventListener('touchstart', (e) => {
-            touchStartX = e.touches[0].clientX;
-        });
-        textContent.addEventListener('touchend', (e) => {
-            clearTimeout(touchTimeout);
-            touchTimeout = setTimeout(() => {
-                const deltaX = e.changedTouches[0].clientX - touchStartX;
-                const sensitivity = parseInt(touchSensitivity.value);
-                if (deltaX > sensitivity && currentPage > 0) {
-                    currentPage--;
-                    stopEffect();
-                    displayPage(-1);
-                } else if (deltaX < -sensitivity && currentPage < pages.length - 1) {
-                    currentPage++;
-                    stopEffect();
-                    displayPage(1);
-                }
-            }, 50);
-        });
-        touchSensitivity.addEventListener('change', () => {
-            localStorage.setItem('touchSensitivity', touchSensitivity.value);
-        });
-
-        // 효과 지연 조정
-        effectDelay.addEventListener('change', () => {
-            let value = Math.min(2000, Math.max(0, parseInt(effectDelay.value) || 0));
-            effectDelay.value = value;
-            localStorage.setItem('effectDelay', value);
-        });
-
-        // 더블탭 기능
-        const hammer = new Hammer(textContent);
-        hammer.get('doubletap').set({ interval: parseInt(doubleTapDelay.value) });
-        hammer.on('doubletap', () => {
-            if (isFullscreen) {
-                stopEffect();
-                exitFullscreen();
-            }
-        });
-        doubleTapDelay.addEventListener('change', () => {
-            hammer.get('doubletap').set({ interval: parseInt(doubleTapDelay.value) });
-            localStorage.setItem('doubleTapDelay', doubleTapDelay.value);
-        });
-
-        // 전체화면 버튼 투명도 조정
-        btnOpacity.addEventListener('input', () => {
-            exitFullscreenBtn.style.opacity = btnOpacity.value;
-            prevPageBtn.style.opacity = btnOpacity.value;
-            nextPageBtn.style.opacity = btnOpacity.value;
-            localStorage.setItem('btnOpacity', btnOpacity.value);
-        });
-
-        // 전체화면 버튼 표시/숨김
-        showFullscreenBtns.addEventListener('change', () => {
-            const display = showFullscreenBtns.checked ? 'block' : 'none';
-            if (isFullscreen) {
-                exitFullscreenBtn.style.display = display;
-                prevPageBtn.style.display = display;
-                nextPageBtn.style.display = display;
-            }
-        });
-
-        // 파일 업로드 처리
-        fileUpload.addEventListener('change', async (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
-            stopEffect();
-            if (file.name.endsWith('.txt')) {
-                const text = await file.text();
-                pages = splitTextToFit(text, textContent.getBoundingClientRect().height);
-                preloadPages();
-                currentPage = 0;
-                displayPage();
-            } else if (file.name.endsWith('.epub')) {
-                book = ePub(await file.arrayBuffer());
-                rendition = book.renderTo(textContent, { width: '100%', height: '100%' });
-                rendition.display();
-                book.ready.then(() => {
-                    book.locations.generate(1024).then(() => {
-                        pages = Array.from({ length: book.locations.total }, (_, i) => i);
-                        currentPage = 0;
-                        displayPage();
+                // 설정 로드
+                loadSettings() {
+                    const settings = {
+                        fontSize: 18,
+                        textMaxWidth: 100,
+                        textHeight: 70,
+                        touchSensitivity: 50,
+                        effectDelay: 400,
+                        doubleTapDelay: 300,
+                        btnOpacity: 0.5
+                    };
+                    Object.entries(settings).forEach(([key, defaultValue]) => {
+                        this.elements[key].value = localStorage.getItem(key) || defaultValue;
+                        if (key === 'fontSize') this.elements.fontSizeRange.value = this.elements.fontSize.value;
                     });
-                });
-            }
-        });
+                },
 
-        // 페이지 분할
-        function splitTextToFit(text, containerHeight) {
-            const tempDiv = document.createElement('div');
-            tempDiv.style.cssText = textContent.style.cssText;
-            tempDiv.style.position = 'absolute';
-            tempDiv.style.visibility = 'hidden';
-            tempDiv.style.width = textContent.offsetWidth + 'px';
-            document.body.appendChild(tempDiv);
-            tempDiv.innerText = text;
-            const totalHeight = tempDiv.offsetHeight;
-            const linesPerPage = Math.floor(containerHeight / parseFloat(getComputedStyle(textContent).lineHeight));
-            const charsPerLine = Math.floor(text.length * containerHeight / totalHeight);
-            const charsPerPage = charsPerLine * linesPerPage;
-            const pagesArray = [];
-            for (let i = 0; i < text.length; i += charsPerPage) {
-                pagesArray.push(text.slice(i, i + charsPerPage));
-            }
-            document.body.removeChild(tempDiv);
-            return pagesArray;
-        }
+                // 텍스트 스타일 업데이트
+                updateTextStyles() {
+                    const { textContent, fontSize, textMaxWidth, textHeight } = this.elements;
+                    textContent.style.fontSize = `${fontSize.value}px`;
+                    textContent.style.width = `${textMaxWidth.value}vw`;
+                    textContent.style.height = `calc(${textHeight.value}vh - 80px)`;
+                    if (!this.state.isFullscreen && this.state.pages.length) this.updatePages();
+                },
 
-        // 페이지 미리 렌더링
-        function preloadPages() {
-            renderedPages = pages.map(page => {
-                const chars = page.split('');
-                return chars.map(c => `<span class="char-span${c === ' ' ? ' char-space' : ''}">${c}</span>`).join('');
-            });
-        }
+                // 버튼 투명도 업데이트
+                updateButtonOpacity() {
+                    const { exitFullscreenBtn, prevPageBtn, nextPageBtn, btnOpacity } = this.elements;
+                    [exitFullscreenBtn, prevPageBtn, nextPageBtn].forEach(btn => btn.style.opacity = btnOpacity.value);
+                },
 
-        // 페이지 표시
-        function displayPage(direction = 0) {
-            if (book && rendition) {
-                rendition.display(book.locations.cfiFromLocation(currentPage));
-                pageInfo.innerText = `페이지 ${currentPage + 1} / ${pages.length}`;
-            } else {
-                textContent.innerHTML = renderedPages[currentPage] || '';
-                pageInfo.innerText = `페이지 ${currentPage + 1} / ${pages.length}`;
-            }
-            updateTextContentStyles();
-            if (pageAnimation.checked && direction !== 0) {
-                textContent.style.transition = 'transform 0.3s ease';
-                textContent.style.transform = `translateX(${direction > 0 ? '-50%' : '50%'})`;
-                textContent.style.opacity = 0;
-                setTimeout(() => {
-                    textContent.style.transition = 'transform 0.3s ease, opacity 0.3s';
-                    textContent.style.transform = 'translateX(0)';
+                // 이벤트 리스너 설정
+                setupEventListeners() {
+                    const { textContent, toggleButton, fileUpload, prevPage, nextPage, jumpToPage, tocButton, libraryButton,
+                            fontSize, fontSizeRange, textMaxWidth, textHeight, touchSensitivity, effectDelay, doubleTapDelay,
+                            btnOpacity, showFullscreenBtns, exitFullscreenBtn, prevPageBtn, nextPageBtn } = this.elements;
+
+                    fontSizeRange.oninput = fontSize.oninput = () => {
+                        fontSize.value = fontSizeRange.value;
+                        localStorage.setItem('fontSize', fontSize.value);
+                        this.updateTextStyles();
+                    };
+
+                    [textMaxWidth, textHeight].forEach(el => {
+                        el.oninput = () => {
+                            localStorage.setItem(el.id, el.value);
+                            this.updateTextStyles();
+                        };
+                    });
+
+                    let touchStartX = 0;
+                    textContent.addEventListener('touchstart', e => touchStartX = e.touches[0].clientX);
+                    textContent.addEventListener('touchend', e => {
+                        const deltaX = e.changedTouches[0].clientX - touchStartX;
+                        const sensitivity = parseInt(touchSensitivity.value);
+                        if (deltaX > sensitivity && this.state.currentPage > 0) this.changePage(-1);
+                        else if (deltaX < -sensitivity && this.state.currentPage < this.state.pages.length - 1) this.changePage(1);
+                    });
+                    touchSensitivity.onchange = () => localStorage.setItem('touchSensitivity', touchSensitivity.value);
+
+                    effectDelay.onchange = () => {
+                        const value = Math.min(2000, Math.max(0, parseInt(effectDelay.value) || 0));
+                        effectDelay.value = value;
+                        localStorage.setItem('effectDelay', value);
+                    };
+
+                    const hammer = new Hammer(textContent);
+                    hammer.get('doubletap').set({ interval: parseInt(doubleTapDelay.value) });
+                    hammer.on('doubletap', () => this.state.isFullscreen && this.toggleFullscreen());
+                    doubleTapDelay.onchange = () => {
+                        hammer.get('doubletap').set({ interval: parseInt(doubleTapDelay.value) });
+                        localStorage.setItem('doubleTapDelay', doubleTapDelay.value);
+                    };
+
+                    btnOpacity.oninput = () => {
+                        localStorage.setItem('btnOpacity', btnOpacity.value);
+                        this.updateButtonOpacity();
+                    };
+
+                    showFullscreenBtns.onchange = () => this.updateFullscreenButtons();
+
+                    fileUpload.onchange = async e => {
+                        const file = e.target.files[0];
+                        if (!file) return;
+                        this.stopEffect();
+                        try {
+                            if (file.name.endsWith('.txt')) {
+                                const text = await file.text();
+                                this.state.pages = this.splitTextToFit(text);
+                                this.preloadPages();
+                                this.state.currentPage = 0;
+                                this.displayPage();
+                            } else if (file.name.endsWith('.epub')) {
+                                this.state.book = ePub(await file.arrayBuffer());
+                                this.state.rendition = this.state.book.renderTo(textContent, { width: '100%', height: '100%' });
+                                this.state.rendition.display();
+                                this.state.book.ready.then(() => {
+                                    this.state.book.locations.generate(1024).then(() => {
+                                        this.state.pages = Array.from({ length: this.state.book.locations.total }, (_, i) => i);
+                                        this.state.currentPage = 0;
+                                        this.displayPage();
+                                    });
+                                });
+                            }
+                        } catch (error) {
+                            console.error('파일 로드 실패:', error);
+                        }
+                    };
+
+                    toggleButton.onclick = () => this.toggleTraining();
+                    prevPage.onclick = () => this.changePage(-1);
+                    nextPage.onclick = () => this.changePage(1);
+                    jumpToPage.onchange = () => {
+                        const page = parseInt(jumpToPage.value) - 1;
+                        if (page >= 0 && page < this.state.pages.length) {
+                            this.state.currentPage = page;
+                            this.stopEffect();
+                            this.displayPage();
+                        }
+                        jumpToPage.value = '';
+                    };
+                    tocButton.onclick = () => this.state.book?.loaded.navigation.then(toc => console.log(toc));
+                    libraryButton.onclick = () => console.log('라이브러리 기능은 아직 구현되지 않았습니다.');
+                    exitFullscreenBtn.onclick = () => this.toggleFullscreen();
+                    prevPageBtn.onclick = () => this.changePage(-1);
+                    nextPageBtn.onclick = () => this.changePage(1);
+                },
+
+                // 페이지 분할
+                splitTextToFit(text) {
+                    const tempDiv = document.createElement('div');
+                    tempDiv.style.cssText = this.elements.textContent.style.cssText + ';position:absolute;visibility:hidden;';
+                    tempDiv.style.width = this.elements.textContent.offsetWidth + 'px';
+                    document.body.appendChild(tempDiv);
+                    tempDiv.innerText = text;
+                    const height = this.elements.textContent.getBoundingClientRect().height;
+                    const linesPerPage = Math.floor(height / parseFloat(getComputedStyle(this.elements.textContent).lineHeight));
+                    const charsPerPage = Math.floor(text.length * height / tempDiv.offsetHeight) * linesPerPage;
+                    const pagesArray = [];
+                    for (let i = 0; i < text.length; i += charsPerPage) pagesArray.push(text.slice(i, i + charsPerPage));
+                    document.body.removeChild(tempDiv);
+                    return pagesArray;
+                },
+
+                // 페이지 미리 렌더링
+                preloadPages() {
+                    this.state.renderedPages = this.state.pages.map(page =>
+                        page.split('').map(c => `<span class="char-span${c === ' ' ? ' char-space' : ''}">${c}</span>`).join('')
+                    );
+                },
+
+                // 페이지 표시
+                displayPage(direction = 0) {
+                    const { textContent, pageInfo, pageAnimation } = this.elements;
+                    if (this.state.book && this.state.rendition) {
+                        this.state.rendition.display(this.state.book.locations.cfiFromLocation(this.state.currentPage));
+                    } else {
+                        textContent.innerHTML = this.state.renderedPages[this.state.currentPage] || '';
+                    }
+                    pageInfo.innerText = `페이지 ${this.state.currentPage + 1} / ${this.state.pages.length}`;
+                    if (pageAnimation.checked && direction) this.animatePage(direction);
+                    if (this.elements.autoRestart.checked && this.state.interval && this.elements.applyEffectDelay.checked) {
+                        setTimeout(() => this.startEffect(), parseInt(this.elements.effectDelay.value));
+                    }
+                },
+
+                // 페이지 애니메이션
+                animatePage(direction) {
+                    const { textContent } = this.elements;
+                    textContent.style.transition = 'transform 0.3s ease';
+                    textContent.style.transform = `translateX(${direction > 0 ? '-50%' : '50%'})`;
+                    textContent.style.opacity = 0;
+                    requestAnimationFrame(() => {
+                        textContent.style.transition = 'transform 0.3s ease, opacity 0.3s';
+                        textContent.style.transform = 'translateX(0)';
+                        textContent.style.opacity = 1;
+                    });
+                },
+
+                // 효과 시작
+                startEffect() {
+                    this.stopEffect();
+                    const { effectSelect, speedControl, textContent } = this.elements;
+                    const intervalTime = parseInt(speedControl.value);
+                    if (effectSelect.value === 'fade') {
+                        let opacity = 1;
+                        this.state.interval = setInterval(() => {
+                            if (opacity > 0) {
+                                opacity -= 0.05;
+                                textContent.style.opacity = opacity;
+                            } else {
+                                clearInterval(this.state.interval);
+                                if (this.state.currentPage < this.state.pages.length - 1) this.changePage(1);
+                            }
+                        }, intervalTime);
+                    } else {
+                        const spans = textContent.querySelectorAll('.char-span:not(.char-space)');
+                        let charIndex = 0;
+                        const step = () => {
+                            if (charIndex < spans.length) {
+                                spans[charIndex++].style.opacity = 0;
+                                this.state.interval = requestAnimationFrame(step);
+                            } else if (this.state.currentPage < this.state.pages.length - 1) this.changePage(1);
+                        };
+                        this.state.interval = requestAnimationFrame(step);
+                    }
+                },
+
+                // 효과 중지
+                stopEffect() {
+                    if (this.state.interval) {
+                        typeof this.state.interval === 'number' ? clearInterval(this.state.interval) : cancelAnimationFrame(this.state.interval);
+                        this.state.interval = null;
+                    }
+                    const { textContent } = this.elements;
                     textContent.style.opacity = 1;
-                }, 10);
-            }
-            if (autoRestart.checked && interval && applyEffectDelay.checked) {
-                setTimeout(() => startEffect(), parseInt(effectDelay.value));
-            }
-        }
+                    textContent.querySelectorAll('.char-span').forEach(span => span.style.opacity = 1);
+                },
 
-        // 효과 시작
-        function startEffect() {
-            stopEffect();
-            const effect = effectSelect.value;
-            const intervalTime = parseInt(speedControl.value);
-            if (effect === 'fade') {
-                let opacity = 1;
-                interval = setInterval(() => {
-                    if (opacity > 0) {
-                        opacity -= 0.05;
-                        textContent.style.opacity = opacity;
+                // 페이지 변경
+                changePage(direction) {
+                    const newPage = this.state.currentPage + direction;
+                    if (newPage >= 0 && newPage < this.state.pages.length) {
+                        this.state.currentPage = newPage;
+                        this.stopEffect();
+                        this.displayPage(direction);
+                    }
+                },
+
+                // 전체화면 버튼 업데이트
+                updateFullscreenButtons() {
+                    const { exitFullscreenBtn, prevPageBtn, nextPageBtn, showFullscreenBtns } = this.elements;
+                    const display = showFullscreenBtns.checked && this.state.isFullscreen ? 'block' : 'none';
+                    [exitFullscreenBtn, prevPageBtn, nextPageBtn].forEach(btn => btn.style.display = display);
+                },
+
+                // 전체화면 토글
+                toggleFullscreen() {
+                    this.stopEffect();
+                    if (this.state.isFullscreen) {
+                        document.exitFullscreen();
+                        document.body.classList.remove('fullscreen');
+                        this.state.isFullscreen = false;
                     } else {
-                        clearInterval(interval);
-                        if (currentPage < pages.length - 1) nextPage.click();
+                        document.documentElement.requestFullscreen();
+                        document.body.classList.add('fullscreen');
+                        this.state.isFullscreen = true;
                     }
-                }, intervalTime);
-            } else {
-                let frameId;
-                const spans = textContent.querySelectorAll('.char-span:not(.char-space)');
-                let charIndex = 0;
-                function step() {
-                    if (charIndex < spans.length) {
-                        spans[charIndex].style.opacity = 0;
-                        charIndex++;
+                    this.updateFullscreenButtons();
+                    this.updateTextStyles();
+                    this.elements.toggleButton.innerText = this.state.isTrainingActive ? '정지' : '시작';
+                },
+
+                // 훈련 토글
+                toggleTraining() {
+                    if (!this.state.isTrainingActive) {
+                        if (this.elements.fullscreenMode.checked) this.toggleFullscreen();
+                        this.startEffect();
+                        this.elements.toggleButton.innerText = '정지';
+                        this.state.isTrainingActive = true;
                     } else {
-                        cancelAnimationFrame(frameId);
-                        if (currentPage < pages.length - 1) nextPage.click();
+                        this.stopEffect();
+                        if (this.state.isFullscreen) this.toggleFullscreen();
+                        this.elements.toggleButton.innerText = '시작';
+                        this.state.isTrainingActive = false;
                     }
-                    frameId = requestAnimationFrame(step);
+                },
+
+                // 페이지 업데이트
+                updatePages() {
+                    this.state.pages = this.splitTextToFit(this.state.pages.join('\n\n'));
+                    this.preloadPages();
+                    this.displayPage();
                 }
-                frameId = requestAnimationFrame(step);
-                interval = { cancel: () => cancelAnimationFrame(frameId) };
-            }
-        }
+            };
 
-        // 효과 중지
-        function stopEffect() {
-            if (interval) {
-                if (interval.cancel) interval.cancel();
-                else clearInterval(interval);
-            }
-            interval = null;
-            textContent.style.opacity = 1;
-            textContent.querySelectorAll('.char-span').forEach(span => span.style.opacity = 1);
-        }
-
-        // 전체화면 종료
-        function exitFullscreen() {
-            if (document.fullscreenElement) document.exitFullscreen();
-            document.body.classList.remove('fullscreen');
-            isFullscreen = false;
-            updateTextContentStyles();
-            exitFullscreenBtn.style.display = 'none';
-            prevPageBtn.style.display = 'none';
-            nextPageBtn.style.display = 'none';
-        }
-
-        // 버튼 이벤트
-        toggleButton.addEventListener('click', () => {
-            if (!isTrainingActive) {
-                if (fullscreenMode.checked) {
-                    document.documentElement.requestFullscreen();
-                    document.body.classList.add('fullscreen');
-                    isFullscreen = true;
-                    if (showFullscreenBtns.checked) {
-                        exitFullscreenBtn.style.display = 'block';
-                        prevPageBtn.style.display = 'block';
-                        nextPageBtn.style.display = 'block';
-                    }
-                }
-                startEffect();
-                toggleButton.innerText = '정지';
-                isTrainingActive = true;
-            } else {
-                stopEffect();
-                exitFullscreen();
-                toggleButton.innerText = '시작';
-                isTrainingActive = false;
-            }
-        });
-
-        prevPage.addEventListener('click', () => {
-            if (currentPage > 0) {
-                currentPage--;
-                stopEffect();
-                displayPage(-1);
-            }
-        });
-
-        nextPage.addEventListener('click', () => {
-            if (currentPage < pages.length - 1) {
-                currentPage++;
-                stopEffect();
-                displayPage(1);
-            }
-        });
-
-        jumpToPage.addEventListener('change', () => {
-            const page = parseInt(jumpToPage.value) - 1;
-            if (page >= 0 && page < pages.length) {
-                currentPage = page;
-                stopEffect();
-                displayPage();
-            }
-            jumpToPage.value = '';
-        });
-
-        tocButton.addEventListener('click', () => {
-            if (book) book.loaded.navigation.then(toc => console.log(toc));
-        });
-
-        libraryButton.addEventListener('click', () => {
-            console.log('라이브러리 기능은 아직 구현되지 않았습니다.');
-        });
-
-        // 전체화면 버튼 이벤트
-        exitFullscreenBtn.addEventListener('click', () => {
-            stopEffect();
-            exitFullscreen();
-            toggleButton.innerText = '시작';
-            isTrainingActive = false;
-        });
-
-        prevPageBtn.addEventListener('click', () => {
-            if (currentPage > 0) {
-                currentPage--;
-                stopEffect();
-                displayPage(-1);
-            }
-        });
-
-        nextPageBtn.addEventListener('click', () => {
-            if (currentPage < pages.length - 1) {
-                currentPage++;
-                stopEffect();
-                displayPage(1);
-            }
-        });
-
-        // 초기화
-        updateTextContentStyles();
-        exitFullscreenBtn.style.opacity = btnOpacity.value;
-        prevPageBtn.style.opacity = btnOpacity.value;
-        nextPageBtn.style.opacity = btnOpacity.value;
+            // 앱 초기화
+            app.init();
+        })();
     </script>
 </body>
 </html>
