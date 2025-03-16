@@ -16,58 +16,6 @@
             touch-action: manipulation; /* 터치 동작 개선 */
             overflow-x: hidden;
         }
-        #controls {
-            margin: 10px 0;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 5px;
-            justify-content: center;
-        }
-        button {
-            padding: 8px 12px;
-            font-size: 14px;
-            border: none;
-            border-radius: 5px;
-            background-color: #3498db;
-            color: white;
-            cursor: pointer;
-            transition: background-color 0.3s, transform 0.1s;
-            max-width: 100px;
-        }
-        button:hover {
-            background-color: #2980b9;
-            transform: scale(1.05);
-        }
-        button:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-        details {
-            margin: 10px 0;
-            width: 100%;
-            z-index: 30;
-        }
-        summary {
-            padding: 10px;
-            background-color: #ecf0f1;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-        #advancedControls {
-            display: grid;
-            gap: 10px;
-            padding: 10px;
-        }
-        #advancedControls label {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-        input[type="range"], input[type="number"], select {
-            padding: 5px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-        }
         #textContent {
             font-size: 18px;
             line-height: 1.6;
@@ -101,10 +49,33 @@
             border: none;
             box-shadow: none;
             border-radius: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            text-align: left;
         }
         #textContent.fixed-size {
             width: var(--fixed-width, 100%) !important;
             height: var(--fixed-height, calc(70vh - 80px)) !important;
+        }
+        #controls {
+            margin: 10px 0;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            justify-content: center;
+        }
+        #message {
+            color: red;
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255, 255, 255, 0.9);
+            padding: 5px 10px;
+            border-radius: 5px;
+            z-index: 10;
+            display: none;
         }
         #pageInfo {
             position: fixed;
@@ -116,12 +87,103 @@
             border-radius: 5px;
             z-index: 10;
             cursor: pointer;
+            user-select: none;
+        }
+        #progressContainer {
+            position: relative;
+            width: 100%;
+            margin: 5px 0;
+        }
+        #progress {
+            width: 100%;
+            height: 4px;
+            opacity: 0.7;
+            transition: background-color 0.3s;
+        }
+        #progressPercent {
+            position: absolute;
+            top: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 12px;
+            color: #333;
+        }
+        #loadingSpinner {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            z-index: 5;
+        }
+        button {
+            padding: 8px 12px;
+            font-size: 14px;
+            border: none;
+            border-radius: 5px;
+            background-color: #3498db;
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.1s;
+            max-width: 100px;
+        }
+        button:hover {
+            background-color: #2980b9;
+            transform: scale(1.05);
+        }
+        button:focus {
+            outline: 2px solid #2980b9;
+            outline-offset: 2px;
+        }
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        details {
+            margin: 10px 0;
+            width: 100%;
+            z-index: 30;
+        }
+        summary {
+            padding: 10px;
+            background-color: #ecf0f1;
+            border-radius: 5px;
+            cursor: pointer;
         }
         .char-span {
-            transition: opacity 0.3s;
+            transition: opacity 0.3s, color 0.3s, background-color 0.1s;
+            color: inherit;
         }
-        .char-space {
-            opacity: 1 !important;
+        .char-span.current {
+            background-color: rgba(255, 255, 0, 0.3);
+        }
+        .char-span.eink-black {
+            background-color: #000 !important;
+            color: #000 !important;
+        }
+        .line {
+            display: block;
+            transition: opacity 0.2s;
+            visibility: visible;
+        }
+        .line.hidden {
+            opacity: 0;
+            visibility: hidden;
+        }
+        .fullscreen #controls, .fullscreen #progressContainer, .fullscreen #message, .fullscreen details, .fullscreen #fileUpload, .fullscreen #toggleButton, .fullscreen #folderOpenButton {
+            display: none;
+        }
+        .fullscreen #pageInfo {
+            bottom: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.5);
+            color: white;
         }
         #fileUpload {
             display: block;
@@ -134,6 +196,7 @@
             font-size: 16px;
             background-color: #f9f9f9;
             cursor: pointer;
+            transition: background-color 0.3s;
         }
         #fileUpload:hover, #fileUpload.dragover {
             background-color: #e6f0fa;
@@ -166,42 +229,116 @@
             display: flex;
             align-items: center;
             gap: 10px;
+            margin-bottom: 10px;
         }
-        #libraryOverlay img {
+        #libraryOverlay .library-item img {
             width: 50px;
             height: 70px;
             object-fit: cover;
         }
+        #libraryOverlay .library-item .no-cover {
+            width: 50px;
+            height: 70px;
+            background: #333;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            font-size: 12px;
+            color: #fff;
+        }
+        #folderOverlay .folder-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            padding-bottom: 10px;
+        }
         #folderOverlay .file-item {
             padding-left: 20px;
+            cursor: pointer;
         }
-        #loadingSpinner {
-            display: none;
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 20px;
-            height: 20px;
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #3498db;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            z-index: 5;
+        #folderOverlay .file-item:hover {
+            background: rgba(255, 255, 255, 0.1);
         }
         @keyframes spin {
             0% { transform: translate(-50%, -50%) rotate(0deg); }
             100% { transform: translate(-50%, -50%) rotate(360deg); }
         }
+        @media (max-width: 600px) {
+            body { padding: 5px; }
+            #textContent {
+                font-size: 16px;
+                height: calc(60vh - 60px);
+                padding: 8px;
+            }
+            #controls {
+                flex-direction: column;
+                gap: 3px;
+            }
+            button {
+                padding: 8px 12px;
+                font-size: 14px;
+                max-width: 100%;
+            }
+            #advancedControls {
+                display: flex;
+                flex-direction: column;
+                gap: 8px;
+                padding: 8px;
+            }
+            input, select {
+                width: 100%;
+                padding: 8px;
+                font-size: 14px;
+                box-sizing: border-box;
+            }
+            #progress {
+                height: 3px;
+            }
+            #pageInfo {
+                font-size: 12px;
+                bottom: 5px;
+                right: 5px;
+            }
+            #message {
+                bottom: 60px;
+                font-size: 14px;
+            }
+        }
         .black-mode body { background-color: #1a1a1a; }
         .black-mode #textContent { background-color: #2d2d2d; color: #fff; border-color: #444; }
+        .black-mode summary { background-color: #3a3a3a; }
+        .black-mode #fileUpload { background-color: #333; border-color: #555; }
+        .black-mode #fileUpload:hover { background-color: #444; }
         #toggleButton {
             position: fixed;
             bottom: 20px;
             left: 20px;
             z-index: 15;
         }
-        .fullscreen #controls, .fullscreen details, .fullscreen #fileUpload { display: none; }
+        .fullscreen #toggleButton {
+            bottom: 10px;
+            left: 10px;
+        }
+        #fullscreenExitButton {
+            position: fixed;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: 50px;
+            background-color: transparent;
+            border: none;
+            color: transparent;
+            cursor: pointer;
+            z-index: 100;
+            display: none;
+        }
+        .fullscreen #fullscreenExitButton {
+            display: block;
+        }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://unpkg.com/epubjs/dist/epub.min.js"></script>
@@ -222,69 +359,109 @@
     <details>
         <summary>고급 설정</summary>
         <div id="advancedControls">
-            <label for="speedControl">속도 (50ms ~ 2000ms):</label>
-            <input type="range" id="speedControl" min="50" max="2000" step="1" value="100">
-            <label for="fontSize">글꼴 크기:</label>
-            <input type="number" id="fontSize" min="12" max="36" value="18">px
+            <label for="speedInput">속도 (빠름: 50ms ~ 느림: 2000ms):</label>
+            <input type="number" id="speedInput" min="50" max="2000" step="1" value="100" style="width: 80px; margin-left: 10px;">
+            <label for="speedPreset">속도 프리셋:</label>
+            <select id="speedPreset">
+                <option value="50">빠르게</option>
+                <option value="100" selected>보통</option>
+                <option value="200">느리게</option>
+            </select>
+            <label for="mobileSpeedControl">모바일 속도 조절:</label>
+            <input type="checkbox" id="mobileSpeedControl">
+            <label for="effectSelect">효과 선택:</label>
+            <select id="effectSelect">
+                <option value="char" selected>글자 단위 소멸</option>
+                <option value="fade">페이드 아웃</option>
+                <option value="eink">전자잉크 모드</option>
+            </select>
+            <label for="fontSize">글꼴 크기 (12 ~ 36px):</label>
+            <input type="number" id="fontSize" min="12" max="36" value="18" style="width: 80px;">
             <label for="fontFamily">글꼴 스타일:</label>
             <select id="fontFamily">
                 <option value="Arial, sans-serif">Arial</option>
                 <option value="Georgia, serif">Georgia</option>
                 <option value="'Noto Sans KR', sans-serif">Noto Sans KR</option>
             </select>
-            <label for="lineHeight">줄 간격:</label>
-            <input type="number" id="lineHeight" min="1" max="3" step="0.1" value="1.6">
-            <label for="letterSpacing">글자 간격:</label>
-            <input type="number" id="letterSpacing" min="0" max="5" step="0.1" value="0">px
-            <label for="preloadRange">프리로드 범위 (±페이지):</label>
-            <input type="number" id="preloadRange" min="1" max="10" value="2">
-            <label for="autoRestart">자동 재시작:</label>
-            <input type="checkbox" id="autoRestart" checked>
+            <label for="lineHeight">줄 간격 (1 ~ 3):</label>
+            <input type="number" id="lineHeight" min="1" max="3" step="0.1" value="1.6" style="width: 80px;">
+            <label for="letterSpacing">글자 간격 (0 ~ 5px):</label>
+            <input type="number" id="letterSpacing" min="0" max="5" step="0.1" value="0" style="width: 80px;">
+            <label for="preloadRange">프리로드 범위 (1 ~ 10페이지):</label>
+            <input type="number" id="preloadRange" min="1" max="10" value="2" style="width: 80px;">
+            <label for="autoRestart">페이지 전환 시 재시작:</label>
+            <input type="checkbox" id="autoRestart">
             <label for="pageAnimation">페이지 전환 애니메이션:</label>
             <input type="checkbox" id="pageAnimation" checked>
+            <label for="showPageInfo">페이지 번호 표시:</label>
+            <input type="checkbox" id="showPageInfo" checked>
             <label for="fullscreenMode">전체 화면 모드:</label>
             <input type="checkbox" id="fullscreenMode">
             <label for="blackMode">블랙 모드:</label>
             <input type="checkbox" id="blackMode">
+            <label for="blackModeColor">블랙 모드 색상:</label>
+            <input type="color" id="blackModeColor" value="#2d2d2d">
             <label for="marginTop">위쪽 여백 (%):</label>
-            <input type="number" id="marginTop" min="0" max="50" value="0" step="1">
+            <input type="number" id="marginTop" min="0" max="50" value="0" step="1" style="width: 80px;">
+            <label for="marginRight">오른쪽 여백 (%):</label>
+            <input type="number" id="marginRight" min="0" max="50" value="0" step="1" style="width: 80px;">
+            <label for="marginBottom">아래쪽 여백 (%):</label>
+            <input type="number" id="marginBottom" min="0" max="50" value="0" step="1" style="width: 80px;">
+            <label for="marginLeft">왼쪽 여백 (%):</label>
+            <input type="number" id="marginLeft" min="0" max="50" value="0" step="1" style="width: 80px;">
             <label for="pageDelay">페이지 이동 후 딜레이 (ms):</label>
-            <input type="number" id="pageDelay" min="0" max="2000" value="400" step="10">
+            <input type="number" id="pageDelay" min="0" max="2000" value="400" step="10" style="width: 80px;">
             <label for="fixedWidth">고정 너비 (px):</label>
-            <input type="number" id="fixedWidth" min="100" max="2000" value="" step="10">px
+            <input type="number" id="fixedWidth" min="100" max="2000" value="" step="10" style="width: 80px;">
             <label for="fixedHeight">고정 높이 (px):</label>
-            <input type="number" id="fixedHeight" min="100" max="2000" value="" step="10">px
+            <input type="number" id="fixedHeight" min="100" max="2000" value="" step="10" style="width: 80px;">
+            <label for="textHeightPercent">텍스트 영역 높이 (%):</label>
+            <input type="number" id="textHeightPercent" min="50" max="150" value="100" step="1" style="width: 80px;">
+            <label for="autoNextPage">효과 종료 후 자동 다음 페이지:</label>
+            <input type="checkbox" id="autoNextPage">
+            <button id="resetSettings" aria-label="설정 초기화">설정 초기화</button>
+            <button id="clearCacheButton" aria-label="캐시 비우기">캐시 비우기</button>
         </div>
     </details>
+    <div id="progressContainer">
+        <progress id="progress" value="0" max="100"></progress>
+        <span id="progressPercent">0%</span>
+    </div>
     <div id="textContent" role="region" aria-label="텍스트 표시 영역">
         <div id="pageInfo" aria-live="polite"></div>
     </div>
     <div id="loadingSpinner"></div>
+    <div id="message" aria-live="assertive"></div>
     <div id="tocOverlay">
-        <button id="closeToc" style="position: absolute; top: 10px; right: 10px;">X</button>
-        <ul id="tocList"></ul>
+        <button id="closeToc" style="position: absolute; top: 10px; right: 10px; padding: 5px; background: #fff; border: none; cursor: pointer;">X</button>
+        <div id="tocContent"></div>
     </div>
     <div id="libraryOverlay">
-        <button id="closeLibrary" style="position: absolute; top: 10px; right: 10px;">X</button>
-        <ul id="libraryList"></ul>
+        <button id="closeLibrary" style="position: absolute; top: 10px; right: 10px; padding: 5px; background: #fff; border: none; cursor: pointer;">X</button>
+        <div id="libraryContent"></div>
     </div>
     <div id="folderOverlay">
-        <button id="closeFolder" style="position: absolute; top: 10px; right: 10px;">X</button>
-        <ul id="folderList"></ul>
+        <button id="closeFolder" style="position: absolute; top: 10px; right: 10px; padding: 5px; background: #fff; border: none; cursor: pointer;">X</button>
+        <div id="folderContent">
+            <ul id="folderList"></ul>
+        </div>
     </div>
+    <button id="fullscreenExitButton" aria-label="전체화면 종료"></button>
 
     <script>
-        // 초기화
-        const fileUpload = document.getElementById('fileUpload');
+        let noSleep;
+        if (typeof NoSleep !== 'undefined') {
+            noSleep = new NoSleep();
+        } else {
+            console.warn('NoSleep.js 로드 실패. 화면 잠금 방지 기능이 작동하지 않습니다.');
+        }
+
+        const fileInput = document.getElementById('fileUpload');
         const textContent = document.getElementById('textContent');
-        const toggleButton = document.getElementById('toggleButton');
-        const prevPage = document.getElementById('prevPage');
-        const nextPage = document.getElementById('nextPage');
-        const tocButton = document.getElementById('tocButton');
-        const libraryButton = document.getElementById('libraryButton');
-        const folderOpenButton = document.getElementById('folderOpenButton');
-        const jumpToPage = document.getElementById('jumpToPage');
-        const speedControl = document.getElementById('speedControl');
+        const speedInput = document.getElementById('speedInput');
+        const speedPreset = document.getElementById('speedPreset');
+        const mobileSpeedControl = document.getElementById('mobileSpeedControl');
+        const effectSelect = document.getElementById('effectSelect');
         const fontSize = document.getElementById('fontSize');
         const fontFamily = document.getElementById('fontFamily');
         const lineHeight = document.getElementById('lineHeight');
@@ -292,35 +469,62 @@
         const preloadRange = document.getElementById('preloadRange');
         const autoRestart = document.getElementById('autoRestart');
         const pageAnimation = document.getElementById('pageAnimation');
+        const showPageInfo = document.getElementById('showPageInfo');
         const fullscreenMode = document.getElementById('fullscreenMode');
         const blackMode = document.getElementById('blackMode');
+        const blackModeColor = document.getElementById('blackModeColor');
         const marginTop = document.getElementById('marginTop');
+        const marginRight = document.getElementById('marginRight');
+        const marginBottom = document.getElementById('marginBottom');
+        const marginLeft = document.getElementById('marginLeft');
         const pageDelay = document.getElementById('pageDelay');
         const fixedWidth = document.getElementById('fixedWidth');
         const fixedHeight = document.getElementById('fixedHeight');
+        const textHeightPercent = document.getElementById('textHeightPercent');
+        const autoNextPage = document.getElementById('autoNextPage');
+        const toggleButton = document.getElementById('toggleButton');
+        const prevPage = document.getElementById('prevPage');
+        const nextPage = document.getElementById('nextPage');
+        const tocButton = document.getElementById('tocButton');
+        const libraryButton = document.getElementById('libraryButton');
+        const folderOpenButton = document.getElementById('folderOpenButton');
+        const jumpToPage = document.getElementById('jumpToPage');
         const pageInfo = document.getElementById('pageInfo');
+        const message = document.getElementById('message');
+        const progress = document.getElementById('progress');
+        const progressPercent = document.getElementById('progressPercent');
         const loadingSpinner = document.getElementById('loadingSpinner');
+        const resetSettings = document.getElementById('resetSettings');
         const tocOverlay = document.getElementById('tocOverlay');
-        const tocList = document.getElementById('tocList');
+        const tocContent = document.getElementById('tocContent');
         const libraryOverlay = document.getElementById('libraryOverlay');
-        const libraryList = document.getElementById('libraryList');
+        const libraryContent = document.getElementById('libraryContent');
         const folderOverlay = document.getElementById('folderOverlay');
+        const folderContent = document.getElementById('folderContent');
         const folderList = document.getElementById('folderList');
+        const clearCacheButton = document.getElementById('clearCacheButton');
+        const fullscreenExitButton = document.getElementById('fullscreenExitButton');
 
-        let interval, pages = [], renderedPages = [], currentPage = 0, isTrainingActive = false, isFullscreen = false;
-        let fullText = '', book, library = JSON.parse(localStorage.getItem('library')) || [];
+        let interval, pages = [], currentPage = 0, book, toc = [];
+        let worker, lastFileName = '';
+        let renderedPages = [];
+        let isFullscreen = false;
+        let libraryFiles = JSON.parse(localStorage.getItem('libraryFiles')) || [];
+        let isTrainingActive = false;
+        let messageTimer;
         let folderStructure = JSON.parse(localStorage.getItem('folderStructure')) || {};
-        const noSleep = new NoSleep();
 
-        // IndexedDB 설정
-        const DB_NAME = 'TextTrainingDB';
+        const DB_NAME = 'vanishingTextDB';
         const DB_VERSION = 1;
-        const CACHE_STORE_NAME = 'fileCache';
+        const CACHE_STORE_NAME = 'fileCacheStore';
         let db;
 
         const dbPromise = new Promise((resolve, reject) => {
             const request = indexedDB.open(DB_NAME, DB_VERSION);
-            request.onerror = (event) => reject(event);
+            request.onerror = (event) => {
+                console.error('IndexedDB 초기화 오류:', event);
+                reject(event);
+            };
             request.onsuccess = (event) => {
                 db = event.target.result;
                 resolve();
@@ -335,21 +539,57 @@
 
         async function getCachedData(fileName) {
             await dbPromise;
-            return new Promise((resolve) => {
+            return new Promise((resolve, reject) => {
                 const transaction = db.transaction([CACHE_STORE_NAME], 'readonly');
                 const store = transaction.objectStore(CACHE_STORE_NAME);
                 const request = store.get(fileName);
                 request.onsuccess = (event) => resolve(event.target.result);
+                request.onerror = (event) => {
+                    console.error('IndexedDB get 오류:', event);
+                    reject(event);
+                };
             });
         }
 
         async function setCachedData(fileName, data) {
             await dbPromise;
-            return new Promise((resolve) => {
+            return new Promise((resolve, reject) => {
                 const transaction = db.transaction([CACHE_STORE_NAME], 'readwrite');
                 const store = transaction.objectStore(CACHE_STORE_NAME);
                 const request = store.put(data, fileName);
-                request.onsuccess = () => resolve();
+                request.onsuccess = (event) => resolve();
+                request.onerror = (event) => {
+                    console.error('IndexedDB set 오류:', event);
+                    reject(event);
+                };
+            });
+        }
+
+        async function deleteCachedData(fileName) {
+            await dbPromise;
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction([CACHE_STORE_NAME], 'readwrite');
+                const store = transaction.objectStore(CACHE_STORE_NAME);
+                const request = store.delete(fileName);
+                request.onsuccess = (event) => resolve();
+                request.onerror = (event) => {
+                    console.error('IndexedDB delete 오류:', event);
+                    reject(event);
+                };
+            });
+        }
+
+        async function clearIndexedDBCache() {
+            await dbPromise;
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction([CACHE_STORE_NAME], 'readwrite');
+                const store = transaction.objectStore(CACHE_STORE_NAME);
+                const request = store.clear();
+                request.onsuccess = (event) => resolve();
+                request.onerror = (event) => {
+                    console.error('IndexedDB clear 오류:', event);
+                    reject(event);
+                };
             });
         }
 
@@ -357,379 +597,499 @@
             await dbPromise;
             const MAX_CACHE_ENTRIES = 5;
             const cachedFiles = [];
-            return new Promise((resolve) => {
+            return new Promise((resolve, reject) => {
                 const transaction = db.transaction([CACHE_STORE_NAME], 'readonly');
                 const store = transaction.objectStore(CACHE_STORE_NAME);
                 const request = store.openCursor();
                 request.onsuccess = async function(event) {
                     const cursor = event.target.result;
                     if (cursor) {
-                        cachedFiles.push({ name: cursor.key, timestamp: cursor.value.timestamp || Date.now() });
+                        const fileName = cursor.key;
+                        const cacheEntry = cursor.value;
+                        cachedFiles.push({ name: fileName, timestamp: cacheEntry.timestamp || Date.now() });
                         cursor.continue();
                     } else {
                         cachedFiles.sort((a, b) => a.timestamp - b.timestamp);
                         while (cachedFiles.length > MAX_CACHE_ENTRIES) {
                             const fileToRemove = cachedFiles.shift();
-                            await new Promise((res) => {
-                                const tx = db.transaction([CACHE_STORE_NAME], 'readwrite');
-                                tx.objectStore(CACHE_STORE_NAME).delete(fileToRemove.name);
-                                tx.oncomplete = () => res();
-                            });
+                            await deleteCachedData(fileToRemove.name);
                         }
                         resolve();
                     }
                 };
+                request.onerror = (event) => {
+                    console.error('IndexedDB cursor error:', event);
+                    reject(event);
+                };
             });
         }
 
-        // 웹 워커 설정
-        const worker = new Worker(URL.createObjectURL(new Blob([`
-            self.onmessage = function(e) {
-                const { text, maxHeight } = e.data;
-                const lines = text.split('\\n').filter(line => line.trim());
-                const pages = [];
-                let currentPageText = '';
-                const maxLinesPerPage = Math.floor(maxHeight / 20);
-                for (let line of lines) {
-                    if (currentPageText.split('\\n').length >= maxLinesPerPage) {
-                        pages.push(currentPageText.trim());
-                        currentPageText = line + '\\n';
-                    } else {
-                        currentPageText += line + '\\n';
+        speedInput.value = localStorage.getItem('speed') || 100;
+        speedPreset.value = localStorage.getItem('speedPreset') || 100;
+        mobileSpeedControl.checked = localStorage.getItem('mobileSpeedControl') === 'true';
+        effectSelect.value = localStorage.getItem('effect') || 'char';
+        fontSize.value = localStorage.getItem('fontSize') || 18;
+        fontFamily.value = localStorage.getItem('fontFamily') || 'Arial, sans-serif';
+        lineHeight.value = localStorage.getItem('lineHeight') || 1.6;
+        letterSpacing.value = localStorage.getItem('letterSpacing') || 0;
+        preloadRange.value = localStorage.getItem('preloadRange') || 2;
+        autoRestart.checked = localStorage.getItem('autoRestart') === 'true';
+        pageAnimation.checked = localStorage.getItem('pageAnimation') !== 'false';
+        showPageInfo.checked = localStorage.getItem('showPageInfo') !== 'false';
+        fullscreenMode.checked = localStorage.getItem('fullscreenMode') === 'true';
+        blackMode.checked = localStorage.getItem('blackMode') === 'true';
+        blackModeColor.value = localStorage.getItem('blackModeColor') || '#2d2d2d';
+        marginTop.value = localStorage.getItem('marginTop') || 0;
+        marginRight.value = localStorage.getItem('marginRight') || 0;
+        marginBottom.value = localStorage.getItem('marginBottom') || 0;
+        marginLeft.value = localStorage.getItem('marginLeft') || 0;
+        pageDelay.value = localStorage.getItem('pageDelay') || 400;
+        fixedWidth.value = localStorage.getItem('fixedWidth') || '';
+        fixedHeight.value = localStorage.getItem('fixedHeight') || '';
+        textHeightPercent.value = localStorage.getItem('textHeightPercent') || 100;
+        autoNextPage.checked = localStorage.getItem('autoNextPage') === 'true';
+        updateTextContentStyles();
+        toggleBlackMode();
+        applyFixedSize();
+
+        if (window.Worker) {
+            const workerCode = `
+                self.onmessage = function(e) {
+                    const { text, maxHeight } = e.data;
+                    const lines = text.split('\\n').filter(line => line.trim().length > 0);
+                    const pages = [];
+                    let currentPageText = '';
+                    const maxLinesPerPage = Math.floor(maxHeight / 20);
+                    for (let line of lines) {
+                        if (currentPageText.split('\\n').length >= maxLinesPerPage) {
+                            pages.push(currentPageText.trim());
+                            currentPageText = line + '\\n';
+                        } else {
+                            currentPageText += line + '\\n';
+                        }
                     }
-                }
-                if (currentPageText.trim()) pages.push(currentPageText.trim());
-                self.postMessage({ pages });
-            };
-        `], { type: 'application/javascript' })));
-
-        // 설정 초기화
-        loadSettings();
-        updateTextContentStyles(false);
-
-        function loadSettings() {
-            speedControl.value = localStorage.getItem('speedControl') || 100;
-            fontSize.value = localStorage.getItem('fontSize') || 18;
-            fontFamily.value = localStorage.getItem('fontFamily') || 'Arial, sans-serif';
-            lineHeight.value = localStorage.getItem('lineHeight') || 1.6;
-            letterSpacing.value = localStorage.getItem('letterSpacing') || 0;
-            preloadRange.value = localStorage.getItem('preloadRange') || 2;
-            autoRestart.checked = localStorage.getItem('autoRestart') !== 'false';
-            pageAnimation.checked = localStorage.getItem('pageAnimation') !== 'false';
-            fullscreenMode.checked = localStorage.getItem('fullscreenMode') === 'true';
-            blackMode.checked = localStorage.getItem('blackMode') === 'true';
-            marginTop.value = localStorage.getItem('marginTop') || 0;
-            pageDelay.value = localStorage.getItem('pageDelay') || 400;
-            fixedWidth.value = localStorage.getItem('fixedWidth') || '';
-            fixedHeight.value = localStorage.getItem('fixedHeight') || '';
+                    if (currentPageText.trim().length > 0) pages.push(currentPageText.trim());
+                    self.postMessage({ pages });
+                };
+            `;
+            worker = new Worker(URL.createObjectURL(new Blob([workerCode], { type: 'application/javascript' })));
         }
 
-        function saveSettings() {
-            localStorage.setItem('speedControl', speedControl.value);
-            localStorage.setItem('fontSize', fontSize.value);
-            localStorage.setItem('fontFamily', fontFamily.value);
-            localStorage.setItem('lineHeight', lineHeight.value);
-            localStorage.setItem('letterSpacing', letterSpacing.value);
-            localStorage.setItem('preloadRange', preloadRange.value);
-            localStorage.setItem('autoRestart', autoRestart.checked);
-            localStorage.setItem('pageAnimation', pageAnimation.checked);
-            localStorage.setItem('fullscreenMode', fullscreenMode.checked);
-            localStorage.setItem('blackMode', blackMode.checked);
-            localStorage.setItem('marginTop', marginTop.value);
-            localStorage.setItem('pageDelay', pageDelay.value);
-            localStorage.setItem('fixedWidth', fixedWidth.value);
-            localStorage.setItem('fixedHeight', fixedHeight.value);
+        function addToLibrary(fileName, fileData, coverUrl) {
+            const existingIndex = libraryFiles.findIndex(item => item.name === fileName);
+            if (existingIndex !== -1) libraryFiles.splice(existingIndex, 1);
+            libraryFiles.unshift({ name: fileName, data: fileData, cover: coverUrl, timestamp: Date.now() });
+            libraryFiles = libraryFiles.slice(0, 10);
+            localStorage.setItem('libraryFiles', JSON.stringify(libraryFiles));
+            pruneFileCache();
         }
 
-        // 스타일 업데이트
-        function updateTextContentStyles(reloadPages = false) {
-            textContent.style.fontSize = `${fontSize.value}px`;
-            textContent.style.fontFamily = fontFamily.value;
-            textContent.style.lineHeight = lineHeight.value;
-            textContent.style.letterSpacing = `${letterSpacing.value}px`;
-            textContent.style.marginTop = `${marginTop.value}vh`;
-            textContent.style.width = `calc(100% - ${marginTop.value}vw)`;
-            textContent.style.height = isFullscreen ? '100vh' : `calc(70vh - ${marginTop.value}vh - 80px)`;
-            applyFixedSize();
-            if (blackMode.checked) {
-                document.body.classList.add('black-mode');
-                textContent.style.backgroundColor = '#2d2d2d';
-                textContent.style.color = '#fff';
-            } else {
-                document.body.classList.remove('black-mode');
-                textContent.style.backgroundColor = '#fff';
-                textContent.style.color = '#333';
-            }
-            if (reloadPages && fullText) {
-                pages = splitTextToFit(fullText);
-                preloadPages();
-                displayPage();
-            }
-        }
-
-        function applyFixedSize() {
-            const width = fixedWidth.value ? `${fixedWidth.value}px` : '';
-            const height = fixedHeight.value ? `${fixedHeight.value}px` : '';
-            textContent.style.setProperty('--fixed-width', width);
-            textContent.style.setProperty('--fixed-height', height);
-            if (width || height) textContent.classList.add('fixed-size');
-            else textContent.classList.remove('fixed-size');
-        }
-
-        // 파일 처리
-        fileUpload.addEventListener('change', (e) => handleFileUpload(e.target.files));
-        folderOpenButton.addEventListener('click', () => {
-            fileUpload.webkitdirectory = true;
-            fileUpload.directory = true;
-            fileUpload.click();
-            fileUpload.webkitdirectory = false;
-            fileUpload.directory = false;
+        fileInput.addEventListener('change', function(event) {
+            handleFileLoad(event.target.files[0]);
         });
 
+        folderOpenButton.addEventListener('click', function() {
+            fileInput.webkitdirectory = true;
+            fileInput.directory = true;
+            fileInput.click();
+            fileInput.webkitdirectory = false;
+            fileInput.directory = false;
+        });
+
+        fileInput.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            fileInput.classList.add('dragover');
+        });
+
+        fileInput.addEventListener('dragleave', () => {
+            fileInput.classList.remove('dragover');
+        });
+
+        fileInput.addEventListener('drop', (e) => {
+            e.preventDefault();
+            fileInput.classList.remove('dragover');
+            handleFileUpload(e.dataTransfer.files);
+        });
+
+        function showMessage(text, duration = 3000) {
+            message.innerText = text;
+            message.style.display = 'block';
+            clearTimeout(messageTimer);
+            messageTimer = setTimeout(() => message.style.display = 'none', duration);
+        }
+
         async function handleFileUpload(files) {
-            if (!files.length) return;
-            loadingSpinner.style.display = 'block';
+            if (!files || files.length === 0) {
+                showMessage('파일을 선택해주세요.');
+                loadingSpinner.style.display = 'none';
+                return;
+            }
             if (files[0].webkitRelativePath) {
                 folderStructure = {};
                 for (let file of files) {
                     const pathParts = file.webkitRelativePath.split('/');
                     let currentLevel = folderStructure;
                     for (let i = 0; i < pathParts.length - 1; i++) {
-                        currentLevel[pathParts[i]] = currentLevel[pathParts[i]] || {};
-                        currentLevel = currentLevel[pathParts[i]];
+                        const folderName = pathParts[i];
+                        if (!currentLevel[folderName]) currentLevel[folderName] = {};
+                        currentLevel = currentLevel[folderName];
                     }
-                    currentLevel[pathParts[pathParts.length - 1]] = file;
+                    const fileName = pathParts[pathParts.length - 1];
+                    currentLevel[fileName] = file;
                 }
                 localStorage.setItem('folderStructure', JSON.stringify(folderStructure));
                 displayFolderStructure();
+                showMessage('폴더 및 파일 목록을 표시합니다.');
             } else {
-                await handleFileLoad(files[0]);
+                handleFileLoad(files[0]);
             }
             loadingSpinner.style.display = 'none';
+            toggleButtons(false);
         }
 
         async function handleFileLoad(file) {
             stopEffect();
-            const fileName = file.name;
-            const cachedData = await getCachedData(fileName);
-            if (cachedData) {
-                pages = cachedData.pages;
-                currentPage = 0;
-                preloadPages();
-                displayPage();
+            if (!file) {
+                showMessage('파일을 선택해주세요.');
+                loadingSpinner.style.display = 'none';
                 return;
             }
+            lastFileName = file.name;
+            textContent.style.opacity = 1;
+            showMessage('파일 로딩 중...');
+            progress.value = 0;
+            toggleButtons(true);
+            loadingSpinner.style.display = 'block';
 
-            if (fileName.endsWith('.txt')) {
-                fullText = await file.text();
-                worker.onmessage = (e) => {
-                    pages = e.data.pages;
-                    setCachedData(fileName, { pages, timestamp: Date.now() });
-                    pruneFileCache();
+            const reader = new FileReader();
+            reader.onload = async function(event) {
+                const fileData = event.target.result;
+                let cachedData = await getCachedData(lastFileName);
+                if (cachedData) {
+                    pages = cachedData.pages;
+                    toc = cachedData.toc || [];
                     currentPage = 0;
+                    loadLastPage();
                     preloadPages();
                     displayPage();
-                    library.push({ name: fileName, text: fullText, cover: null });
-                    localStorage.setItem('library', JSON.stringify(library));
-                };
-                worker.postMessage({ text: fullText, maxHeight: textContent.getBoundingClientRect().height });
-            } else if (fileName.endsWith('.epub')) {
-                book = ePub(await file.arrayBuffer());
-                await book.ready;
-                const coverUrl = await book.coverUrl();
-                fullText = '';
-                const spineItems = [];
-                await book.loaded.spine.then(spine => spine.each(item => spineItems.push(item)));
-                const contents = await Promise.all(spineItems.map(item => book.load(item.href)));
-                contents.forEach(content => {
-                    const div = document.createElement('div');
-                    div.innerHTML = content;
-                    fullText += div.innerText + '\n\n';
-                });
-                worker.onmessage = (e) => {
-                    pages = e.data.pages;
-                    setCachedData(fileName, { pages, timestamp: Date.now() });
-                    pruneFileCache();
-                    currentPage = 0;
-                    preloadPages();
-                    displayPage();
-                    library.push({ name: fileName, text: fullText, cover: coverUrl });
-                    localStorage.setItem('library', JSON.stringify(library));
-                };
-                worker.postMessage({ text: fullText, maxHeight: textContent.getBoundingClientRect().height });
-            }
+                    showMessage('');
+                    progress.value = 0;
+                    toggleButtons(false);
+                    loadingSpinner.style.display = 'none';
+                    return;
+                }
+                if (file.name.endsWith('.txt')) {
+                    if (worker) {
+                        worker.onmessage = async function(e) {
+                            pages = e.data.pages;
+                            await setCachedData(lastFileName, { pages: pages, timestamp: Date.now() });
+                            currentPage = 0;
+                            loadLastPage();
+                            preloadPages();
+                            displayPage();
+                            showMessage('');
+                            progress.value = 0;
+                            toggleButtons(false);
+                            loadingSpinner.style.display = 'none';
+                            addToLibrary(file.name, fileData, null);
+                        };
+                        worker.onerror = function(e) {
+                            showMessage('웹 워커 오류: ' + e.message);
+                            toggleButtons(false);
+                            loadingSpinner.style.display = 'none';
+                        };
+                        worker.postMessage({ text: fileData, maxHeight: textContent.getBoundingClientRect().height });
+                    } else {
+                        pages = splitTextToFit(fileData, textContent.getBoundingClientRect().height);
+                        await setCachedData(lastFileName, { pages: pages, timestamp: Date.now() });
+                        currentPage = 0;
+                        loadLastPage();
+                        preloadPages();
+                        displayPage();
+                        showMessage('');
+                        progress.value = 0;
+                        toggleButtons(false);
+                        loadingSpinner.style.display = 'none';
+                        addToLibrary(file.name, fileData, null);
+                    }
+                } else if (file.name.endsWith('.epub')) {
+                    if (!window.ePub || !window.JSZip) {
+                        showMessage('epub.js 또는 JSZip 로딩 실패.');
+                        toggleButtons(false);
+                        loadingSpinner.style.display = 'none';
+                        return;
+                    }
+                    book = window.ePub(fileData);
+                    try {
+                        await book.ready;
+                        showMessage('EPUB 파싱 중...');
+                        const coverUrl = await book.coverUrl();
+                        const pagesData = await loadEpubPages();
+                        pages = pagesData;
+                        const nav = await book.loaded.navigation;
+                        toc = nav.toc;
+                        await setCachedData(lastFileName, { pages: pages, toc: toc, timestamp: Date.now() });
+                        currentPage = 0;
+                        loadLastPage();
+                        preloadPages();
+                        displayPage();
+                        showMessage('');
+                        progress.value = 0;
+                        toggleButtons(false);
+                        loadingSpinner.style.display = 'none';
+                        addToLibrary(file.name, fileData, coverUrl);
+                    } catch (err) {
+                        showMessage('EPUB 로드 오류: ' + err.message);
+                        toggleButtons(false);
+                        loadingSpinner.style.display = 'none';
+                    }
+                }
+            };
+            reader.onerror = function() {
+                showMessage('파일 읽기 오류.');
+                toggleButtons(false);
+                loadingSpinner.style.display = 'none';
+            };
+            if (file.name.endsWith('.txt')) reader.readAsText(file, 'UTF-8');
+            else if (file.name.endsWith('.epub')) reader.readAsArrayBuffer(file);
         }
 
-        // 페이지 분할 및 렌더링
-        function splitTextToFit(text) {
-            const tempDiv = document.createElement('div');
-            tempDiv.style.cssText = textContent.style.cssText;
-            tempDiv.style.position = 'absolute';
-            tempDiv.style.visibility = 'hidden';
-            document.body.appendChild(tempDiv);
-            const lines = text.split('\n').filter(line => line.trim());
-            const pagesArray = [];
-            let currentPage = '';
-            const maxHeight = textContent.getBoundingClientRect().height;
-            for (const line of lines) {
-                tempDiv.innerText = currentPage + line + '\n';
-                if (tempDiv.scrollHeight > maxHeight) {
-                    pagesArray.push(currentPage.trim());
-                    currentPage = line + '\n';
+        async function loadEpubPages() {
+            if (book && book.rendition) book.rendition.destroy();
+            let fullText = '';
+            let loadedCount = 0;
+            const sections = book.spine.items;
+            book.rendition = book.renderTo('textContent', {
+                ignoreContainerRead: true,
+                flow: 'paginated',
+                width: '100%',
+                height: '100%'
+            });
+            for (let i = 0; i < sections.length; i++) {
+                const section = book.spine.get(i);
+                const content = await section.load(book.load.bind(book));
+                loadedCount++;
+                progress.value = (loadedCount / sections.length) * 50;
+                const div = document.createElement('div');
+                div.appendChild(content.cloneNode(true));
+                const text = div.innerText.trim();
+                if (text) fullText += text + '\n\n';
+            }
+            return splitTextToFit(fullText, textContent.getBoundingClientRect().height);
+        }
+
+        function splitTextToFit(text, containerHeight) {
+            const lines = text.split('\n').filter(line => line.trim().length > 0);
+            const pages = [];
+            let currentPageText = '';
+            const testDiv = document.createElement('div');
+            testDiv.style.cssText = `font-size: ${fontSize.value}px; line-height: ${lineHeight.value}; white-space: pre-wrap; visibility: hidden; position: absolute; padding: 10px; font-family: ${fontFamily.value}; letter-spacing: ${letterSpacing.value}px;`;
+            document.body.appendChild(testDiv);
+            for (let line of lines) {
+                testDiv.innerText = currentPageText + line + '\n';
+                if (testDiv.getBoundingClientRect().height > containerHeight) {
+                    pages.push(currentPageText.trim());
+                    currentPageText = line + '\n';
                 } else {
-                    currentPage += line + '\n';
+                    currentPageText += line + '\n';
                 }
             }
-            if (currentPage.trim()) pagesArray.push(currentPage.trim());
-            document.body.removeChild(tempDiv);
-            return pagesArray;
+            if (currentPageText.trim().length > 0) pages.push(currentPageText.trim());
+            document.body.removeChild(testDiv);
+            return pages;
         }
 
         function preloadPages() {
-            renderedPages = pages.map(page => {
-                const chars = page.split('');
-                return chars.map(c => `<span class="char-span${c === ' ' ? ' char-space' : ''}">${c}</span>`).join('');
-            });
-        }
-
-        function displayPage(direction = 0) {
-            textContent.innerHTML = renderedPages[currentPage] || pages[currentPage] || '';
-            pageInfo.innerText = `페이지 ${currentPage + 1} / ${pages.length}`;
-            if (pageAnimation.checked && direction !== 0) {
-                textContent.style.transition = 'transform 0.3s ease, opacity 0.3s';
-                textContent.style.transform = `translateX(${direction > 0 ? '-50%' : '50%'})`;
-                textContent.style.opacity = 0;
-                setTimeout(() => {
-                    textContent.style.transform = 'translateX(0)';
-                    textContent.style.opacity = 1;
-                    if (autoRestart.checked) {
-                        setTimeout(() => startEffect(), parseInt(pageDelay.value));
-                    }
-                }, 300);
-            } else if (autoRestart.checked) {
-                setTimeout(() => startEffect(), parseInt(pageDelay.value));
+            renderedPages = [];
+            const range = parseInt(preloadRange.value);
+            const start = Math.max(0, currentPage - range);
+            const end = Math.min(pages.length, currentPage + range + 1);
+            for (let i = start; i < end; i++) {
+                const text = pages[i];
+                const lines = text.split('\n').filter(line => line.trim().length > 0);
+                const html = lines.map(line => {
+                    const chars = line.split('');
+                    return `<div class="line">${chars.map(char => char.trim() === '' ? `<span class="char-span char-space">${char}</span>` : `<span class="char-span">${char}</span>`).join('')}</div>`;
+                }).join('');
+                renderedPages[i] = html;
             }
         }
 
-        // 효과 제어
-        function startEffect() {
-            stopEffect();
-            const intervalTime = parseInt(speedControl.value);
-            interval = setInterval(() => {
-                if (textContent.style.opacity > 0) {
-                    textContent.style.opacity = Math.max(0, textContent.style.opacity - 0.05);
-                } else {
-                    clearInterval(interval);
-                    if (currentPage < pages.length - 1) nextPage.click();
+        function displayPage(direction = 0) {
+            const startTime = performance.now();
+            if (!renderedPages[currentPage]) loadingSpinner.style.display = 'block';
+            if (pageAnimation.checked && direction !== 0) {
+                textContent.style.transform = direction > 0 ? 'translateX(-100%)' : 'translateX(100%)';
+                textContent.style.opacity = 0;
+            }
+            const totalDelay = 50;
+            setTimeout(() => {
+                textContent.innerHTML = renderedPages[currentPage] || '';
+                updateTextContentStyles();
+                pageInfo.innerText = showPageInfo.checked ? `${currentPage + 1} / ${pages.length}` : '';
+                progress.value = 0;
+                updateProgressPercent(0);
+                const loadTime = performance.now() - startTime;
+                if (loadTime < 100) loadingSpinner.style.display = 'none';
+                if (pageAnimation.checked) {
+                    textContent.style.transform = 'translateX(0)';
+                    textContent.style.opacity = 1;
                 }
-            }, intervalTime);
+                preloadPages();
+                saveLastPage();
+            }, totalDelay);
         }
 
-        function stopEffect() {
-            if (interval) clearInterval(interval);
-            interval = null;
-            textContent.style.opacity = 1;
-            textContent.querySelectorAll('.char-span').forEach(span => span.style.opacity = 1);
+        function loadLastPage() {
+            const lastPage = localStorage.getItem(`lastPage_${lastFileName}`);
+            currentPage = lastPage ? parseInt(lastPage) : 0;
+            currentPage = Math.max(0, Math.min(currentPage, pages.length - 1));
         }
 
-        // 이벤트 리스너
+        function saveLastPage() {
+            localStorage.setItem(`lastPage_${lastFileName}`, currentPage);
+        }
+
         toggleButton.addEventListener('click', () => {
             if (!isTrainingActive) {
                 if (fullscreenMode.checked) {
-                    document.documentElement.requestFullscreen();
-                    textContent.classList.add('fullscreen');
-                    isFullscreen = true;
-                    noSleep.enable();
+                    const requestFullscreen = document.documentElement.requestFullscreen || document.documentElement.webkitRequestFullscreen;
+                    if (!document.fullscreenElement && requestFullscreen) {
+                        requestFullscreen.call(document.documentElement).then(() => {
+                            document.body.style.opacity = 0;
+                            setTimeout(() => {
+                                document.body.classList.add('fullscreen');
+                                textContent.classList.add('fullscreen');
+                                document.body.style.opacity = 1;
+                                if (noSleep) noSleep.enable();
+                                isFullscreen = true;
+                                applyFixedSize();
+                            }, 300);
+                        }).catch(err => console.error('Fullscreen 요청 실패:', err));
+                    }
                 }
                 startEffect();
                 toggleButton.innerText = '정지';
                 isTrainingActive = true;
             } else {
                 stopEffect();
-                if (isFullscreen) {
-                    document.exitFullscreen();
-                    textContent.classList.remove('fullscreen');
-                    isFullscreen = false;
-                    noSleep.disable();
-                }
+                exitFullscreen();
                 toggleButton.innerText = '시작';
                 isTrainingActive = false;
             }
         });
 
-        prevPage.addEventListener('click', () => {
-            if (currentPage > 0) {
-                currentPage--;
-                stopEffect();
-                displayPage(-1);
-            }
-        });
-
-        nextPage.addEventListener('click', () => {
-            if (currentPage < pages.length - 1) {
-                currentPage++;
-                stopEffect();
-                displayPage(1);
-            }
-        });
-
-        jumpToPage.addEventListener('change', () => {
-            const page = parseInt(jumpToPage.value) - 1;
-            if (page >= 0 && page < pages.length) {
-                currentPage = page;
-                stopEffect();
-                displayPage();
-            }
-            jumpToPage.value = '';
-        });
-
-        tocButton.addEventListener('click', () => {
-            if (!book) {
-                tocList.innerHTML = '<li>목차가 없습니다.</li>';
-            } else {
-                book.loaded.navigation.then(nav => {
-                    tocList.innerHTML = nav.toc.map((item, i) => `<li data-index="${i}">${item.label}</li>`).join('');
-                    tocOverlay.style.display = 'block';
-                    tocList.querySelectorAll('li').forEach(li => {
-                        li.addEventListener('click', () => {
-                            currentPage = parseInt(li.dataset.index);
-                            stopEffect();
-                            displayPage();
-                            tocOverlay.style.display = 'none';
-                        });
-                    });
+        function stopEffect() {
+            if (interval) clearInterval(interval);
+            textContent.style.opacity = 1;
+            textContent.style.backgroundColor = blackMode.checked ? blackModeColor.value : '#fff';
+            textContent.style.color = blackMode.checked ? '#fff' : '#333';
+            textContent.classList.remove('eink-mode');
+            if (effectSelect.value === 'char' || effectSelect.value === 'eink') {
+                textContent.querySelectorAll('.char-span').forEach(span => {
+                    span.style.opacity = 1;
+                    span.style.color = blackMode.checked ? '#fff' : '#333';
+                    span.style.backgroundColor = '';
+                    span.classList.remove('current', 'eink-black');
                 });
+                textContent.querySelectorAll('.line').forEach(line => {
+                    line.classList.remove('hidden');
+                    line.style.visibility = 'visible';
+                });
+                progress.value = 0;
+                updateProgressPercent(0);
+                progress.style.backgroundColor = '';
             }
-            tocOverlay.style.display = 'block';
-        });
+            if (isTrainingActive) {
+                toggleButton.innerText = '시작';
+                isTrainingActive = false;
+            }
+        }
 
-        document.getElementById('closeToc').addEventListener('click', () => {
-            tocOverlay.style.display = 'none';
-        });
+        function exitFullscreen() {
+            const exitFullscreen = document.exitFullscreen || document.webkitExitFullscreen;
+            if (document.fullscreenElement && exitFullscreen) {
+                document.body.style.opacity = 0;
+                setTimeout(() => {
+                    exitFullscreen.call(document).then(() => {
+                        document.body.classList.remove('fullscreen');
+                        textContent.classList.remove('fullscreen');
+                        document.body.style.opacity = 1;
+                        if (noSleep) noSleep.disable();
+                        isFullscreen = false;
+                        applyFixedSize();
+                    }).catch(err => console.error('Fullscreen 종료 실패:', err));
+                }, 300);
+            }
+        }
+
+        tocButton.addEventListener('click', showToc);
 
         libraryButton.addEventListener('click', () => {
-            libraryList.innerHTML = library.map((item, i) => `
-                <li class="library-item" data-index="${i}">
-                    ${item.cover ? `<img src="${item.cover}" alt="${item.name}">` : `<span>No Cover</span>`}
-                    <span>${item.name}</span>
-                </li>
-            `).join('');
+            libraryContent.innerHTML = '<ul>' + libraryFiles.map((file, index) => {
+                const cover = file.cover ? `<img src="${file.cover}" alt="${file.name} 표지">` : `<div class="no-cover">${file.name}</div>`;
+                return `<li class="library-item" data-index="${index}">${cover}<span>${file.name}</span></li>`;
+            }).join('') + '</ul>';
             libraryOverlay.style.display = 'block';
-            libraryList.querySelectorAll('li').forEach(li => {
-                li.addEventListener('click', () => {
+            libraryContent.querySelectorAll('li').forEach(li => {
+                li.addEventListener('click', async (e) => {
+                    e.stopPropagation();
                     const index = parseInt(li.dataset.index);
-                    fullText = library[index].text;
-                    pages = splitTextToFit(fullText);
-                    preloadPages();
-                    currentPage = 0;
-                    displayPage();
+                    const file = libraryFiles[index];
+                    lastFileName = file.name;
                     libraryOverlay.style.display = 'none';
+                    showMessage('라이브러리에서 불러오는 중...');
+                    toggleButtons(true);
+                    loadingSpinner.style.display = 'block';
+                    await pruneFileCache();
+                    let cachedData = await getCachedData(lastFileName);
+                    if (cachedData) {
+                        pages = cachedData.pages;
+                        toc = cachedData.toc || [];
+                        currentPage = 0;
+                        loadLastPage();
+                        preloadPages();
+                        displayPage();
+                        showMessage('');
+                        toggleButtons(false);
+                        loadingSpinner.style.display = 'none';
+                        return;
+                    }
+                    if (file.name.endsWith('.txt')) {
+                        pages = splitTextToFit(file.data, textContent.getBoundingClientRect().height);
+                        await setCachedData(lastFileName, { pages: pages, timestamp: Date.now() });
+                        currentPage = 0;
+                        loadLastPage();
+                        preloadPages();
+                        displayPage();
+                    } else if (file.name.endsWith('.epub')) {
+                        book = window.ePub(file.data);
+                        try {
+                            await book.ready;
+                            const pagesData = await loadEpubPages();
+                            pages = pagesData;
+                            const nav = await book.loaded.navigation;
+                            toc = nav.toc;
+                            await setCachedData(lastFileName, { pages: pages, toc: toc, timestamp: Date.now() });
+                            currentPage = 0;
+                            loadLastPage();
+                            preloadPages();
+                            displayPage();
+                        } catch (err) {
+                            showMessage('EPUB 로드 오류: ' + err.message);
+                            toggleButtons(false);
+                            loadingSpinner.style.display = 'none';
+                            return;
+                        }
+                    }
+                    showMessage('');
+                    toggleButtons(false);
+                    loadingSpinner.style.display = 'none';
                 });
             });
-        });
-
-        document.getElementById('closeLibrary').addEventListener('click', () => {
-            libraryOverlay.style.display = 'none';
+            document.getElementById('closeLibrary').addEventListener('click', () => {
+                libraryOverlay.style.display = 'none';
+            });
         });
 
         function displayFolderStructure() {
@@ -748,6 +1108,7 @@
                         parentElement.appendChild(li);
                     } else {
                         const folderLi = document.createElement('li');
+                        folderLi.classList.add('folder-item');
                         folderLi.textContent = itemName;
                         const subUl = document.createElement('ul');
                         buildFolderList(item, subUl);
@@ -764,82 +1125,594 @@
             folderOverlay.style.display = 'none';
         });
 
-        // 설정 변경 이벤트
-        speedControl.addEventListener('input', () => {
-            saveSettings();
-            if (isTrainingActive) {
-                stopEffect();
-                startEffect();
-            }
+        speedInput.addEventListener('input', () => {
+            let value = Math.min(2000, Math.max(50, parseInt(speedInput.value) || 50));
+            speedInput.value = value;
+            speedPreset.value = value;
+            adjustSpeed();
+            if (!interval) previewEffect();
+            localStorage.setItem('speed', value);
+        });
+
+        speedPreset.addEventListener('change', () => {
+            speedInput.value = speedPreset.value;
+            adjustSpeed();
+            if (!interval) previewEffect();
+            localStorage.setItem('speedPreset', speedPreset.value);
+        });
+
+        mobileSpeedControl.addEventListener('change', () => {
+            localStorage.setItem('mobileSpeedControl', mobileSpeedControl.checked);
+        });
+
+        effectSelect.addEventListener('change', () => {
+            stopEffect();
+            preloadPages();
+            displayPage();
+            adjustSpeed();
+            if (!interval) previewEffect();
+            localStorage.setItem('effect', effectSelect.value);
         });
 
         fontSize.addEventListener('input', () => {
-            updateTextContentStyles(true);
-            saveSettings();
+            let value = Math.min(36, Math.max(12, parseInt(fontSize.value) || 12));
+            fontSize.value = value;
+            textContent.style.fontSize = `${value}px`;
+            pages = splitTextToFit(pages.join('\n\n'), textContent.getBoundingClientRect().height);
+            preloadPages();
+            displayPage();
+            localStorage.setItem('fontSize', value);
         });
 
         fontFamily.addEventListener('change', () => {
-            updateTextContentStyles(true);
-            saveSettings();
+            textContent.style.fontFamily = fontFamily.value;
+            pages = splitTextToFit(pages.join('\n\n'), textContent.getBoundingClientRect().height);
+            preloadPages();
+            displayPage();
+            localStorage.setItem('fontFamily', fontFamily.value);
         });
 
-        lineHeight.addEventListener('change', () => {
-            updateTextContentStyles(true);
-            saveSettings();
+        lineHeight.addEventListener('input', () => {
+            let value = Math.min(3, Math.max(1, parseFloat(lineHeight.value) || 1));
+            lineHeight.value = value;
+            textContent.style.lineHeight = value;
+            pages = splitTextToFit(pages.join('\n\n'), textContent.getBoundingClientRect().height);
+            preloadPages();
+            displayPage();
+            localStorage.setItem('lineHeight', value);
         });
 
-        letterSpacing.addEventListener('change', () => {
-            updateTextContentStyles(true);
-            saveSettings();
+        letterSpacing.addEventListener('input', () => {
+            let value = Math.min(5, Math.max(0, parseFloat(letterSpacing.value) || 0));
+            letterSpacing.value = value;
+            textContent.style.letterSpacing = `${value}px`;
+            pages = splitTextToFit(pages.join('\n\n'), textContent.getBoundingClientRect().height);
+            preloadPages();
+            displayPage();
+            localStorage.setItem('letterSpacing', value);
         });
 
         preloadRange.addEventListener('input', () => {
+            let value = Math.min(10, Math.max(1, parseInt(preloadRange.value) || 1));
+            preloadRange.value = value;
             preloadPages();
-            saveSettings();
+            displayPage();
+            localStorage.setItem('preloadRange', value);
         });
 
-        autoRestart.addEventListener('change', () => saveSettings());
-        pageAnimation.addEventListener('change', () => saveSettings());
-        fullscreenMode.addEventListener('change', () => saveSettings());
-        blackMode.addEventListener('change', () => {
-            updateTextContentStyles(false);
-            saveSettings();
+        autoRestart.addEventListener('change', () => localStorage.setItem('autoRestart', autoRestart.checked));
+        pageAnimation.addEventListener('change', () => {
+            localStorage.setItem('pageAnimation', pageAnimation.checked);
+            displayPage();
+        });
+        showPageInfo.addEventListener('change', () => {
+            localStorage.setItem('showPageInfo', showPageInfo.checked);
+            displayPage();
+        });
+        fullscreenMode.addEventListener('change', () => {
+            localStorage.setItem('fullscreenMode', fullscreenMode.checked);
+            toggleFullscreenMode();
         });
 
-        marginTop.addEventListener('input', () => {
-            updateTextContentStyles(true);
-            saveSettings();
-        });
-
-        pageDelay.addEventListener('input', () => saveSettings());
-
-        fixedWidth.addEventListener('input', () => {
-            updateTextContentStyles(true);
-            saveSettings();
-        });
-
-        fixedHeight.addEventListener('input', () => {
-            updateTextContentStyles(true);
-            saveSettings();
-        });
-
-        // 터치 제스처 (Hammer.js)
-        const hammer = new Hammer(textContent);
-        hammer.get('swipe').set({ direction: Hammer.DIRECTION_HORIZONTAL });
-        hammer.on('swipeleft', () => {
-            if (currentPage < pages.length - 1) {
-                currentPage++;
-                stopEffect();
-                displayPage(1);
+        function toggleFullscreenMode() {
+            if (fullscreenMode.checked) {
+                const requestFullscreen = document.documentElement.requestFullscreen || document.documentElement.webkitRequestFullscreen;
+                if (!document.fullscreenElement && requestFullscreen) {
+                    requestFullscreen.call(document.documentElement).then(() => {
+                        document.body.style.opacity = 0;
+                        setTimeout(() => {
+                            document.body.classList.add('fullscreen');
+                            textContent.classList.add('fullscreen');
+                            document.body.style.opacity = 1;
+                            if (noSleep) noSleep.enable();
+                            isFullscreen = true;
+                            applyFixedSize();
+                        }, 300);
+                    }).catch(err => console.error('Fullscreen 요청 실패:', err));
+                }
+            } else {
+                exitFullscreen();
             }
+        }
+
+        blackMode.addEventListener('change', () => {
+            localStorage.setItem('blackMode', blackMode.checked);
+            toggleBlackMode();
         });
-        hammer.on('swiperight', () => {
+        blackModeColor.addEventListener('input', () => {
+            localStorage.setItem('blackModeColor', blackModeColor.value);
+            toggleBlackMode();
+        });
+        marginTop.addEventListener('input', () => {
+            updateTextContentMargins();
+            pages = splitTextToFit(pages.join('\n\n'), textContent.getBoundingClientRect().height);
+            preloadPages();
+            displayPage();
+            localStorage.setItem('marginTop', marginTop.value);
+        });
+        marginRight.addEventListener('input', () => {
+            updateTextContentMargins();
+            pages = splitTextToFit(pages.join('\n\n'), textContent.getBoundingClientRect().height);
+            preloadPages();
+            displayPage();
+            localStorage.setItem('marginRight', marginRight.value);
+        });
+        marginBottom.addEventListener('input', () => {
+            updateTextContentMargins();
+            pages = splitTextToFit(pages.join('\n\n'), textContent.getBoundingClientRect().height);
+            preloadPages();
+            displayPage();
+            localStorage.setItem('marginBottom', marginBottom.value);
+        });
+        marginLeft.addEventListener('input', () => {
+            updateTextContentMargins();
+            pages = splitTextToFit(pages.join('\n\n'), textContent.getBoundingClientRect().height);
+            preloadPages();
+            displayPage();
+            localStorage.setItem('marginLeft', marginLeft.value);
+        });
+        pageDelay.addEventListener('input', () => {
+            localStorage.setItem('pageDelay', pageDelay.value);
+        });
+        fixedWidth.addEventListener('input', () => {
+            let value = Math.min(2000, Math.max(100, parseInt(fixedWidth.value) || 0));
+            fixedWidth.value = value || '';
+            applyFixedSize();
+            pages = splitTextToFit(pages.join('\n\n'), textContent.getBoundingClientRect().height);
+            preloadPages();
+            displayPage();
+            localStorage.setItem('fixedWidth', fixedWidth.value);
+        });
+        fixedHeight.addEventListener('input', () => {
+            let value = Math.min(2000, Math.max(100, parseInt(fixedHeight.value) || 0));
+            fixedHeight.value = value || '';
+            applyFixedSize();
+            pages = splitTextToFit(pages.join('\n\n'), textContent.getBoundingClientRect().height);
+            preloadPages();
+            displayPage();
+            localStorage.setItem('fixedHeight', fixedHeight.value);
+        });
+        textHeightPercent.addEventListener('input', () => {
+            let value = Math.min(150, Math.max(50, parseInt(textHeightPercent.value) || 50));
+            textHeightPercent.value = value;
+            updateTextContentHeight();
+            pages = splitTextToFit(pages.join('\n\n'), textContent.getBoundingClientRect().height);
+            preloadPages();
+            displayPage();
+            localStorage.setItem('textHeightPercent', value);
+        });
+        autoNextPage.addEventListener('change', () => localStorage.setItem('autoNextPage', autoNextPage.checked));
+
+        prevPage.addEventListener('click', () => {
             if (currentPage > 0) {
                 currentPage--;
                 stopEffect();
                 displayPage(-1);
             }
         });
+
+        nextPage.addEventListener('click', () => {
+            if (currentPage < pages.length - 1) {
+                currentPage++;
+                stopEffect();
+                displayPage(1);
+            }
+        });
+
+        jumpToPage.addEventListener('change', () => {
+            let pageNum = parseInt(jumpToPage.value) - 1;
+            if (pageNum >= 0 && pageNum < pages.length) {
+                currentPage = pageNum;
+                stopEffect();
+                displayPage();
+            }
+            jumpToPage.value = '';
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowLeft' && currentPage > 0) {
+                currentPage--;
+                stopEffect();
+                displayPage(-1);
+            } else if (e.key === 'ArrowRight' && currentPage < pages.length - 1) {
+                currentPage++;
+                stopEffect();
+                displayPage(1);
+            } else if (e.key === ' ' || e.key === 'Spacebar') {
+                e.preventDefault();
+                toggleButton.click();
+            } else if (e.key === 'Enter') {
+                if (currentPage < pages.length - 1) {
+                    currentPage++;
+                    stopEffect();
+                    displayPage(1);
+                }
+            } else if (e.key === '+') {
+                let newSpeed = Math.max(50, parseInt(speedInput.value) - 5);
+                speedInput.value = newSpeed;
+                speedPreset.value = newSpeed;
+                adjustSpeed();
+                localStorage.setItem('speed', newSpeed);
+            } else if (e.key === '-') {
+                let newSpeed = Math.min(2000, parseInt(speedInput.value) + 5);
+                speedInput.value = newSpeed;
+                speedPreset.value = newSpeed;
+                adjustSpeed();
+                localStorage.setItem('speed', newSpeed);
+            } else if (e.key === 'Home') {
+                currentPage = 0;
+                stopEffect();
+                displayPage();
+            } else if (e.key === 'End') {
+                currentPage = pages.length - 1;
+                stopEffect();
+                displayPage();
+            } else if (e.key === 'Escape' && (tocOverlay.style.display === 'block' || libraryOverlay.style.display === 'block' || folderOverlay.style.display === 'block')) {
+                tocOverlay.style.display = 'none';
+                libraryOverlay.style.display = 'none';
+                folderOverlay.style.display = 'none';
+            }
+        });
+
+        let touchStartX = 0;
+        let touchStartY = 0;
+        let isPullingDown = false;
+
+        textContent.addEventListener('touchstart', (e) => {
+            touchStartX = e.touches[0].clientX;
+            touchStartY = e.touches[0].clientY;
+            isPullingDown = false;
+        });
+
+        textContent.addEventListener('touchmove', (e) => {
+            if (isFullscreen && !isPullingDown && e.touches[0].clientY - touchStartY > 100) {
+                isPullingDown = true;
+                document.body.style.transition = 'margin-top 0.3s ease-out';
+                document.body.style.marginTop = `${e.touches[0].clientY - touchStartY - 100}px`;
+            }
+        });
+
+        textContent.addEventListener('touchend', (e) => {
+            const touchEndX = e.changedTouches[0].clientX;
+            const touchEndY = e.changedTouches[0].clientY;
+            const deltaX = touchEndX - touchStartX;
+            const deltaY = touchEndY - touchStartY;
+            const windowWidth = window.innerWidth;
+            const windowHeight = window.innerHeight;
+
+            if (isPullingDown) {
+                document.body.style.transition = 'margin-top 0.2s ease-in';
+                document.body.style.marginTop = '0px';
+                if (deltaY > 200) exitFullscreen();
+                isPullingDown = false;
+                return;
+            }
+
+            if (mobileSpeedControl.checked && touchEndY > windowHeight * 0.8) {
+                if (touchEndX > windowWidth * 0.75) {
+                    let newSpeed = Math.max(50, parseInt(speedInput.value) - 5);
+                    speedInput.value = newSpeed;
+                    speedPreset.value = newSpeed;
+                    adjustSpeed();
+                    localStorage.setItem('speed', newSpeed);
+                    showMessage(`속도: ${newSpeed}ms`, 1000);
+                } else if (touchEndX < windowWidth * 0.25) {
+                    let newSpeed = Math.min(2000, parseInt(speedInput.value) + 5);
+                    speedInput.value = newSpeed;
+                    speedPreset.value = newSpeed;
+                    adjustSpeed();
+                    localStorage.setItem('speed', newSpeed);
+                    showMessage(`속도: ${newSpeed}ms`, 1000);
+                }
+            } else if (deltaX < -100) {
+                if (currentPage < pages.length - 1) {
+                    currentPage++;
+                    stopEffect();
+                    displayPage(1);
+                }
+            } else if (deltaX > 100) {
+                if (currentPage > 0) {
+                    currentPage--;
+                    stopEffect();
+                    displayPage(-1);
+                }
+            }
+        });
+
+        pageInfo.addEventListener('click', () => toggleButton.click());
+
+        window.addEventListener('popstate', (e) => {
+            if (isFullscreen) {
+                e.preventDefault();
+                stopEffect();
+                exitFullscreen();
+                history.pushState(null, null, window.location.href);
+            }
+        });
+        history.pushState(null, null, window.location.href);
+
+        function showToc() {
+            if (!book || toc.length === 0) {
+                showMessage('목차가 없습니다.', 2000);
+                return;
+            }
+            tocContent.innerHTML = '<ul>' + toc.map((item, index) => {
+                return `<li data-page="${index}">${item.label || '제목 없음'}</li>`;
+            }).join('') + '</ul>';
+            tocOverlay.style.display = 'block';
+            tocContent.querySelectorAll('li').forEach(li => {
+                li.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const pageIndex = parseInt(li.dataset.page);
+                    currentPage = pageIndex;
+                    stopEffect();
+                    displayPage();
+                    tocOverlay.style.display = 'none';
+                });
+            });
+            document.getElementById('closeToc').addEventListener('click', (e) => {
+                e.stopPropagation();
+                tocOverlay.style.display = 'none';
+            });
+        }
+
+        resetSettings.addEventListener('click', async () => {
+            localStorage.clear();
+            await clearIndexedDBCache();
+            speedInput.value = 100;
+            speedPreset.value = 100;
+            mobileSpeedControl.checked = false;
+            effectSelect.value = 'char';
+            fontSize.value = 18;
+            fontFamily.value = 'Arial, sans-serif';
+            lineHeight.value = 1.6;
+            letterSpacing.value = 0;
+            preloadRange.value = 2;
+            autoRestart.checked = false;
+            pageAnimation.checked = true;
+            showPageInfo.checked = true;
+            fullscreenMode.checked = false;
+            blackMode.checked = false;
+            blackModeColor.value = '#2d2d2d';
+            marginTop.value = 0;
+            marginRight.value = 0;
+            marginBottom.value = 0;
+            marginLeft.value = 0;
+            pageDelay.value = 400;
+            fixedWidth.value = '';
+            fixedHeight.value = '';
+            textHeightPercent.value = 100;
+            autoNextPage.checked = false;
+            libraryFiles = [];
+            localStorage.setItem('libraryFiles', JSON.stringify(libraryFiles));
+            folderStructure = {};
+            localStorage.setItem('folderStructure', JSON.stringify(folderStructure));
+            showMessage('설정이 초기화되었습니다.', 2000);
+            toggleButton.innerText = '시작';
+            isTrainingActive = false;
+            pages = [];
+            renderedPages = [];
+            textContent.innerHTML = '';
+            pageInfo.innerText = '';
+            progress.value = 0;
+            updateProgressPercent(0);
+            applyFixedSize();
+        });
+
+        clearCacheButton.addEventListener('click', async () => {
+            await clearIndexedDBCache();
+            showMessage('캐시가 비워졌습니다.', 2000);
+        });
+
+        function updateTextContentStyles() {
+            textContent.style.fontSize = `${fontSize.value}px`;
+            textContent.style.fontFamily = fontFamily.value;
+            textContent.style.lineHeight = lineHeight.value;
+            textContent.style.letterSpacing = `${letterSpacing.value}px`;
+            updateTextContentMargins();
+            updateTextContentHeight();
+            toggleBlackMode();
+            applyFixedSize();
+        }
+
+        function updateTextContentMargins() {
+            textContent.style.marginTop = `${marginTop.value}vh`;
+            textContent.style.marginRight = `${marginRight.value}vw`;
+            textContent.style.marginBottom = `${marginBottom.value}vh`;
+            textContent.style.width = `calc(100% - ${marginLeft.value}vw - ${marginRight.value}vw)`;
+            textContent.style.height = `calc(${textHeightPercent.value}vh - ${marginTop.value}vh - ${marginBottom.value}vh - 80px)`;
+            document.documentElement.style.setProperty('--margin-bottom', `${marginBottom.value}vh`);
+        }
+
+        function updateTextContentHeight() {
+            textContent.style.height = `calc(${textHeightPercent.value}vh - ${marginTop.value}vh - ${marginBottom.value}vh - 80px)`;
+        }
+
+        function toggleBlackMode() {
+            if (blackMode.checked) {
+                document.body.classList.add('black-mode');
+                textContent.style.backgroundColor = blackModeColor.value;
+                textContent.style.color = '#fff';
+            } else {
+                document.body.classList.remove('black-mode');
+                textContent.style.backgroundColor = '#fff';
+                textContent.style.color = '#333';
+            }
+        }
+
+        function toggleButtons(disable) {
+            toggleButton.disabled = disable;
+            prevPage.disabled = disable;
+            nextPage.disabled = disable;
+            tocButton.disabled = disable;
+            libraryButton.disabled = disable;
+            folderOpenButton.disabled = disable;
+        }
+
+        function startEffect() {
+            if (!textContent.innerText) {
+                showMessage('먼저 파일을 업로드하세요.', 2000);
+                return;
+            }
+            stopEffect();
+            const effect = effectSelect.value;
+            const intervalTime = parseInt(speedInput.value);
+            const fadeStep = Math.min(0.05, 10 / intervalTime);
+            const baseBgColor = blackMode.checked ? blackModeColor.value : '#fff';
+            const baseTextColor = blackMode.checked ? '#fff' : '#333';
+            setTimeout(() => {
+                if (effect === 'fade') {
+                    let opacity = 1;
+                    interval = setInterval(() => {
+                        if (opacity > 0) {
+                            opacity -= fadeStep;
+                            textContent.style.opacity = opacity;
+                            progress.value = (1 - opacity) * 100;
+                            updateProgressPercent(progress.value);
+                        } else {
+                            clearInterval(interval);
+                            if (autoNextPage.checked && currentPage < pages.length - 1) nextPage.click();
+                        }
+                    }, intervalTime);
+                } else if (effect === 'char') {
+                    const spans = textContent.querySelectorAll('.char-span:not(.char-space)');
+                    let charIndex = 0;
+                    const totalChars = spans.length;
+                    interval = setInterval(() => {
+                        if (charIndex < spans.length) {
+                            if (charIndex > 0) spans[charIndex - 1].classList.remove('current');
+                            spans[charIndex].classList.add('current');
+                            spans[charIndex].style.opacity = 0;
+                            charIndex++;
+                            const completedChars = Array.from(spans).filter(span => span.style.opacity === '0').length;
+                            progress.value = (completedChars / totalChars) * 100;
+                            updateProgressPercent(progress.value);
+                            progress.style.backgroundColor = `hsl(${progress.value * 1.2}, 70%, 50%)`;
+                        } else {
+                            if (charIndex > 0) spans[charIndex - 1].classList.remove('current');
+                            const lines = textContent.querySelectorAll('.line');
+                            lines.forEach(line => {
+                                line.classList.add('hidden');
+                                setTimeout(() => line.style.display = 'none', 200);
+                            });
+                            clearInterval(interval);
+                            if (autoNextPage.checked && currentPage < pages.length - 1) nextPage.click();
+                        }
+                    }, intervalTime / 2);
+                } else if (effect === 'eink') {
+                    const spans = textContent.querySelectorAll('.char-span:not(.char-space)');
+                    let charIndex = 0;
+                    const totalChars = spans.length;
+                    interval = setInterval(() => {
+                        if (charIndex < spans.length) {
+                            if (charIndex > 0) spans[charIndex - 1].classList.remove('current');
+                            spans[charIndex].classList.add('current');
+                            spans[charIndex].classList.add('eink-black');
+                            setTimeout(() => {
+                                spans[charIndex].classList.remove('eink-black');
+                                spans[charIndex].style.backgroundColor = baseBgColor;
+                                spans[charIndex].style.color = baseTextColor;
+                            }, 100);
+                            charIndex++;
+                            progress.value = (charIndex / totalChars) * 100;
+                            updateProgressPercent(progress.value);
+                            progress.style.backgroundColor = `hsl(${progress.value * 1.2}, 70%, 50%)`;
+                            if (charIndex === totalChars) {
+                                textContent.classList.add('eink-mode');
+                                setTimeout(() => {
+                                    textContent.classList.remove('eink-mode');
+                                    textContent.style.backgroundColor = baseBgColor;
+                                    textContent.style.color = baseTextColor;
+                                    if (autoNextPage.checked && currentPage < pages.length - 1) nextPage.click();
+                                }, 200);
+                            }
+                        } else {
+                            if (charIndex > 0) spans[charIndex - 1].classList.remove('current');
+                            clearInterval(interval);
+                        }
+                    }, intervalTime / 2);
+                }
+            }, 400);
+        }
+
+        function adjustSpeed() {
+            if (interval) {
+                stopEffect();
+                startEffect();
+            }
+        }
+
+        function previewEffect() {
+            if (interval) return;
+            const spans = textContent.querySelectorAll('.char-span:not(.char-space)');
+            let index = 0;
+            const preview = setInterval(() => {
+                if (index < spans.length) {
+                    if (effectSelect.value === 'char') spans[index].style.opacity = 0;
+                    else if (effectSelect.value === 'fade') spans[index].style.opacity = 0.5;
+                    else if (effectSelect.value === 'eink') {
+                        spans[index].classList.add('eink-black');
+                        setTimeout(() => {
+                            spans[index].classList.remove('eink-black');
+                            spans[index].style.color = blackMode.checked ? '#fff' : '#333';
+                            spans[index].style.backgroundColor = '';
+                        }, 100);
+                    }
+                    index++;
+                } else {
+                    clearInterval(preview);
+                    spans.forEach(span => {
+                        span.style.opacity = 1;
+                        span.style.color = blackMode.checked ? '#fff' : '#333';
+                        span.style.backgroundColor = '';
+                        span.classList.remove('eink-black');
+                    });
+                }
+            }, speedInput.value);
+        }
+
+        function updateProgressPercent(value) {
+            progressPercent.innerText = `${Math.round(value)}%`;
+        }
+
+        function applyFixedSize() {
+            const width = fixedWidth.value ? `${fixedWidth.value}px` : '';
+            const height = fixedHeight.value ? `${fixedHeight.value}px` : '';
+            textContent.style.setProperty('--fixed-width', width);
+            textContent.style.setProperty('--fixed-height', height);
+            if (width || height) {
+                textContent.classList.add('fixed-size');
+            } else {
+                textContent.classList.remove('fixed-size');
+            }
+            pages = splitTextToFit(pages.join('\n\n'), textContent.getBoundingClientRect().height);
+            preloadPages();
+            displayPage();
+        }
+
+        if (fullscreenMode.checked) toggleFullscreenMode();
+
+        fullscreenExitButton.addEventListener('click', () => exitFullscreen());
     </script>
 </body>
 </html>
