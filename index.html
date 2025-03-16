@@ -5,10 +5,105 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>사라지는 텍스트 훈련</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 0; padding: 5px; transition: opacity 0.3s, background-color 0.3s; background-color: #f5f5f5; overscroll-behavior: none; position: relative; touch-action: pan-y; overflow-x: hidden; }
-        #textContent { font-size: 18px; line-height: 1.6; white-space: pre-wrap; position: relative; overflow-y: hidden; overflow-x: hidden; width: 100%; height: calc(70vh - 80px); margin: 0 auto; padding: 10px; box-sizing: border-box; background-color: #fff; border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); z-index: 1; transition: transform 0.3s ease, background-color 0.3s, color 0.3s; color: #333; user-select: none; }
-        .fullscreen #textContent { width: 100vw; height: 100vh; margin: 0; padding: 20px; }
-        /* 기존 스타일 유지, 생략 */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 5px;
+            transition: opacity 0.3s, background-color 0.3s;
+            background-color: #f5f5f5;
+            overscroll-behavior: none;
+            position: relative;
+            touch-action: pan-y;
+            overflow-x: hidden;
+        }
+        #controls {
+            margin: 10px 0;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        button {
+            padding: 8px 12px;
+            font-size: 14px;
+            cursor: pointer;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            background-color: #fff;
+            transition: background-color 0.2s;
+        }
+        button:hover {
+            background-color: #e0e0e0;
+        }
+        details {
+            margin: 10px 0;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: #fff;
+        }
+        summary {
+            cursor: pointer;
+            font-weight: bold;
+        }
+        #advancedControls {
+            display: grid;
+            gap: 10px;
+            padding: 10px 0;
+        }
+        #advancedControls label {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        input[type="range"], input[type="number"] {
+            padding: 5px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        #textContent {
+            font-size: 18px;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            position: relative;
+            overflow-y: hidden;
+            overflow-x: hidden;
+            width: 100%;
+            height: calc(70vh - 80px);
+            margin: 0 auto;
+            padding: 10px;
+            box-sizing: border-box;
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            z-index: 1;
+            transition: transform 0.3s ease, background-color 0.3s, color 0.3s;
+            color: #333;
+            user-select: none;
+        }
+        .fullscreen #textContent {
+            width: 100vw;
+            height: 100vh;
+            margin: 0;
+            padding: 20px;
+            border: none;
+            border-radius: 0;
+            box-shadow: none;
+        }
+        #pageInfo {
+            position: absolute;
+            bottom: 5px;
+            right: 10px;
+            font-size: 12px;
+            color: #666;
+        }
+        .char-span {
+            transition: opacity 0.1s;
+        }
+        .char-space {
+            opacity: 1 !important;
+        }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://unpkg.com/epubjs/dist/epub.min.js"></script>
@@ -45,17 +140,33 @@
             <input type="checkbox" id="applyEffectDelay" checked>
             <label for="doubleTapDelay">더블탭 지연 (ms):</label>
             <input type="number" id="doubleTapDelay" min="200" max="1000" value="300" step="50">
-            <!-- 기존 설정 항목 유지, 생략 -->
+            <label for="effectSelect">효과 선택:</label>
+            <select id="effectSelect">
+                <option value="fade">페이드</option>
+                <option value="char">글자별</option>
+            </select>
+            <label for="pageAnimation">페이지 전환 애니메이션:</label>
+            <input type="checkbox" id="pageAnimation" checked>
+            <label for="autoRestart">자동 재시작:</label>
+            <input type="checkbox" id="autoRestart" checked>
+            <label for="fullscreenMode">전체화면 모드:</label>
+            <input type="checkbox" id="fullscreenMode">
         </div>
     </details>
     <div id="textContent" role="region" aria-label="텍스트 표시 영역">
         <div id="pageInfo" aria-live="polite"></div>
     </div>
-    <!-- 기존 HTML 구조 유지, 생략 -->
 
     <script>
         const textContent = document.getElementById('textContent');
         const toggleButton = document.getElementById('toggleButton');
+        const fileUpload = document.getElementById('fileUpload');
+        const prevPage = document.getElementById('prevPage');
+        const nextPage = document.getElementById('nextPage');
+        const tocButton = document.getElementById('tocButton');
+        const libraryButton = document.getElementById('libraryButton');
+        const jumpToPage = document.getElementById('jumpToPage');
+        const speedControl = document.getElementById('speedControl');
         const fontSize = document.getElementById('fontSize');
         const fontSizeRange = document.getElementById('fontSizeRange');
         const textMaxWidth = document.getElementById('textMaxWidth');
@@ -64,8 +175,25 @@
         const effectDelay = document.getElementById('effectDelay');
         const applyEffectDelay = document.getElementById('applyEffectDelay');
         const doubleTapDelay = document.getElementById('doubleTapDelay');
-        let interval, pages = [], currentPage = 0, isFullscreen = false;
+        const effectSelect = document.getElementById('effectSelect');
+        const pageAnimation = document.getElementById('pageAnimation');
+        const autoRestart = document.getElementById('autoRestart');
+        const fullscreenMode = document.getElementById('fullscreenMode');
+        const pageInfo = document.getElementById('pageInfo');
 
+        let interval, pages = [], renderedPages = [], currentPage = 0, isTrainingActive = false, isFullscreen = false;
+        let book, rendition;
+
+        // 초기 설정 로드
+        fontSize.value = localStorage.getItem('fontSize') || 18;
+        fontSizeRange.value = fontSize.value;
+        textMaxWidth.value = localStorage.getItem('textMaxWidth') || 100;
+        textMaxHeight.value = localStorage.getItem('textMaxHeight') || 100;
+        touchSensitivity.value = localStorage.getItem('touchSensitivity') || 50;
+        effectDelay.value = localStorage.getItem('effectDelay') || 400;
+        doubleTapDelay.value = localStorage.getItem('doubleTapDelay') || 300;
+
+        // 폰트 크기 동기화
         fontSizeRange.oninput = fontSize.oninput = () => {
             fontSize.value = fontSizeRange.value;
             textContent.style.fontSize = `${fontSize.value}px`;
@@ -75,21 +203,26 @@
             displayPage();
         };
 
+        // 텍스트 영역 크기 조정
         textMaxWidth.addEventListener('input', updateTextContentStyles);
         textMaxHeight.addEventListener('input', updateTextContentStyles);
         function updateTextContentStyles() {
-            textContent.style.width = `calc(${textMaxWidth.value}vw - ${marginLeft.value}vw - ${marginRight.value}vw)`;
-            textContent.style.height = `calc(${textMaxHeight.value}vh - ${marginTop.value}vh - ${marginBottom.value}vh - 80px)`;
             textContent.style.maxWidth = `${textMaxWidth.value}vw`;
             textContent.style.maxHeight = `${textMaxHeight.value}vh`;
-            textContent.style.fontSize = `${fontSize.value}px`;
+            textContent.style.width = `${textMaxWidth.value}vw`;
+            textContent.style.height = `calc(${textMaxHeight.value}vh - 80px)`;
+            localStorage.setItem('textMaxWidth', textMaxWidth.value);
+            localStorage.setItem('textMaxHeight', textMaxHeight.value);
             pages = splitTextToFit(pages.join('\n\n'), textContent.getBoundingClientRect().height);
             preloadPages();
             displayPage();
         }
 
+        // 터치 민감도 조정
         let touchStartX = 0, touchTimeout;
-        textContent.addEventListener('touchstart', (e) => { touchStartX = e.touches[0].clientX; });
+        textContent.addEventListener('touchstart', (e) => {
+            touchStartX = e.touches[0].clientX;
+        });
         textContent.addEventListener('touchend', (e) => {
             clearTimeout(touchTimeout);
             touchTimeout = setTimeout(() => {
@@ -106,26 +239,18 @@
                 }
             }, 50);
         });
+        touchSensitivity.addEventListener('change', () => {
+            localStorage.setItem('touchSensitivity', touchSensitivity.value);
+        });
 
-        effectDelay.value = localStorage.getItem('effectDelay') || 400;
+        // 효과 지연 조정
         effectDelay.addEventListener('change', () => {
             let value = Math.min(2000, Math.max(0, parseInt(effectDelay.value) || 0));
             effectDelay.value = value;
             localStorage.setItem('effectDelay', value);
         });
 
-        function displayPage(direction = 0) {
-            textContent.innerHTML = renderedPages[currentPage] || '';
-            updateTextContentStyles();
-            if (pageAnimation.checked && applyEffectDelay.checked) {
-                textContent.style.transform = 'translateX(0)';
-                textContent.style.opacity = 1;
-                setTimeout(() => { if (autoRestart.checked && interval) startEffect(); }, parseInt(effectDelay.value));
-            } else if (autoRestart.checked && interval && applyEffectDelay.checked) {
-                setTimeout(() => startEffect(), parseInt(effectDelay.value));
-            }
-        }
-
+        // 더블탭 기능
         const hammer = new Hammer(textContent);
         hammer.get('doubletap').set({ interval: parseInt(doubleTapDelay.value) });
         hammer.on('doubletap', () => {
@@ -139,6 +264,86 @@
             localStorage.setItem('doubleTapDelay', doubleTapDelay.value);
         });
 
+        // 파일 업로드 처리
+        fileUpload.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            stopEffect();
+            if (file.name.endsWith('.txt')) {
+                const text = await file.text();
+                pages = splitTextToFit(text, textContent.getBoundingClientRect().height);
+                preloadPages();
+                currentPage = 0;
+                displayPage();
+            } else if (file.name.endsWith('.epub')) {
+                book = ePub(await file.arrayBuffer());
+                rendition = book.renderTo(textContent, { width: '100%', height: '100%' });
+                rendition.display();
+                book.ready.then(() => {
+                    book.locations.generate(1024).then(() => {
+                        pages = Array.from({ length: book.locations.total }, (_, i) => i);
+                        currentPage = 0;
+                        displayPage();
+                    });
+                });
+            }
+        });
+
+        // 페이지 분할
+        function splitTextToFit(text, containerHeight) {
+            const tempDiv = document.createElement('div');
+            tempDiv.style.cssText = textContent.style.cssText;
+            tempDiv.style.position = 'absolute';
+            tempDiv.style.visibility = 'hidden';
+            tempDiv.style.width = textContent.offsetWidth + 'px';
+            document.body.appendChild(tempDiv);
+            tempDiv.innerText = text;
+            const totalHeight = tempDiv.offsetHeight;
+            const linesPerPage = Math.floor(containerHeight / parseFloat(getComputedStyle(textContent).lineHeight));
+            const charsPerLine = Math.floor(text.length * containerHeight / totalHeight);
+            const charsPerPage = charsPerLine * linesPerPage;
+            const pagesArray = [];
+            for (let i = 0; i < text.length; i += charsPerPage) {
+                pagesArray.push(text.slice(i, i + charsPerPage));
+            }
+            document.body.removeChild(tempDiv);
+            return pagesArray;
+        }
+
+        // 페이지 미리 렌더링
+        function preloadPages() {
+            renderedPages = pages.map(page => {
+                const chars = page.split('');
+                return chars.map(c => `<span class="char-span${c === ' ' ? ' char-space' : ''}">${c}</span>`).join('');
+            });
+        }
+
+        // 페이지 표시
+        function displayPage(direction = 0) {
+            if (book && rendition) {
+                rendition.display(book.locations.cfiFromLocation(currentPage));
+                pageInfo.innerText = `페이지 ${currentPage + 1} / ${pages.length}`;
+            } else {
+                textContent.innerHTML = renderedPages[currentPage] || '';
+                pageInfo.innerText = `페이지 ${currentPage + 1} / ${pages.length}`;
+            }
+            updateTextContentStyles();
+            if (pageAnimation.checked && direction !== 0) {
+                textContent.style.transition = 'transform 0.3s ease';
+                textContent.style.transform = `translateX(${direction > 0 ? '-50%' : '50%'})`;
+                textContent.style.opacity = 0;
+                setTimeout(() => {
+                    textContent.style.transition = 'transform 0.3s ease, opacity 0.3s';
+                    textContent.style.transform = 'translateX(0)';
+                    textContent.style.opacity = 1;
+                }, 10);
+            }
+            if (autoRestart.checked && interval && applyEffectDelay.checked) {
+                setTimeout(() => startEffect(), parseInt(effectDelay.value));
+            }
+        }
+
+        // 효과 시작
         function startEffect() {
             stopEffect();
             const effect = effectSelect.value;
@@ -173,23 +378,33 @@
             }
         }
 
+        // 효과 중지
         function stopEffect() {
             if (interval) {
                 if (interval.cancel) interval.cancel();
                 else clearInterval(interval);
             }
             interval = null;
+            textContent.style.opacity = 1;
+            textContent.querySelectorAll('.char-span').forEach(span => span.style.opacity = 1);
         }
 
+        // 전체화면 종료
         function exitFullscreen() {
             if (document.fullscreenElement) document.exitFullscreen();
             document.body.classList.remove('fullscreen');
             isFullscreen = false;
+            updateTextContentStyles();
         }
 
+        // 버튼 이벤트
         toggleButton.addEventListener('click', () => {
             if (!isTrainingActive) {
-                if (fullscreenMode.checked) document.documentElement.requestFullscreen();
+                if (fullscreenMode.checked) {
+                    document.documentElement.requestFullscreen();
+                    document.body.classList.add('fullscreen');
+                    isFullscreen = true;
+                }
                 startEffect();
                 toggleButton.innerText = '정지';
                 isTrainingActive = true;
@@ -201,7 +416,42 @@
             }
         });
 
-        // 기존 JavaScript 함수들 (splitTextToFit, preloadPages 등) 유지, 생략
+        prevPage.addEventListener('click', () => {
+            if (currentPage > 0) {
+                currentPage--;
+                stopEffect();
+                displayPage(-1);
+            }
+        });
+
+        nextPage.addEventListener('click', () => {
+            if (currentPage < pages.length - 1) {
+                currentPage++;
+                stopEffect();
+                displayPage(1);
+            }
+        });
+
+        jumpToPage.addEventListener('change', () => {
+            const page = parseInt(jumpToPage.value) - 1;
+            if (page >= 0 && page < pages.length) {
+                currentPage = page;
+                stopEffect();
+                displayPage();
+            }
+            jumpToPage.value = '';
+        });
+
+        tocButton.addEventListener('click', () => {
+            if (book) book.loaded.navigation.then(toc => console.log(toc));
+        });
+
+        libraryButton.addEventListener('click', () => {
+            console.log('라이브러리 기능은 아직 구현되지 않았습니다.');
+        });
+
+        // 초기화
+        updateTextContentStyles();
     </script>
 </body>
 </html>
